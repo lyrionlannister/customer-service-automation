@@ -1,33 +1,45 @@
 import { useState } from "react";
-import { Link } from "react-router";
-import { AuthController } from "../controller/auth-controller";
+import { Link, useNavigate } from "react-router";
+import { useLogin } from "../../common/hooks/use-login";
 import Input from "../../common/components/ui/inputs/input";
 import Label from "../../common/components/ui/inputs/label";
+import Button from "../../common/components/ui/button/button";
+import Alert from "../../common/components/ui/alert/alert";
 import { EyeCloseIcon, EyeIcon } from "../../common/icons";
 
-import { useNavigate } from "react-router";
+interface AuthFormProps {
+  controller?: any; // Para compatibilidad hacia atrás
+}
 
-const AuthForm: React.FC<{ controller: AuthController }> = ({ controller }) => {
-  const [showPassword, setShowPassword] = useState(false);
+const AuthForm: React.FC<AuthFormProps> = () => {
+  const { login, loading, error, success, clearError, clearSuccess } =
+    useLogin();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const body = {
-      user: formData.get("user"),
-      password: formData.get("password"),
-    };
+    clearError();
+    clearSuccess();
 
-    try {
-      const success = await controller.login(body);
-      if (success) {
+    const result = await login(formData);
+    if (result) {
+      // Login exitoso, redirigir al dashboard
+      setTimeout(() => {
         navigate("/", { replace: true });
-      } else {
-        console.error("Error al iniciar sesión: Credenciales incorrectas");
-      }
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
+      }, 1000);
     }
   };
 
@@ -40,24 +52,51 @@ const AuthForm: React.FC<{ controller: AuthController }> = ({ controller }) => {
               Ingresa a tu cuenta
             </h1>
           </div>
+
+          {error && (
+            <div className="mb-4">
+              <Alert variant="error" title="Error" message={error} />
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4">
+              <Alert
+                variant="success"
+                title="¡Éxito!"
+                message="Sesión iniciada. Serás redirigido..."
+              />
+            </div>
+          )}
+
           <div>
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label className="text-gray-500">
-                    Usuario <span className="text-error-500">*</span>{" "}
+                    Email <span className="text-error-500">*</span>
                   </Label>
-                  <Input placeholder="Usuario" name="user" />
+                  <Input
+                    type="email"
+                    placeholder="tu@email.com"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
                 </div>
                 <div>
                   <Label className="text-gray-500">
-                    Contraseña <span className="text-error-500">*</span>{" "}
+                    Contraseña <span className="text-error-500">*</span>
                   </Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Ingresa tu contraseña"
                       name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      disabled={loading}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -71,26 +110,27 @@ const AuthForm: React.FC<{ controller: AuthController }> = ({ controller }) => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between"></div>
                 <div>
-                  <button
+                  <Button
                     type="submit"
-                    className="w-full border border-gray-500 p-2 rounded-2xl  hover:bg-gray-400/50"
+                    disabled={loading}
+                    className="w-full"
+                    variant="primary"
                   >
-                    Iniciar Sesión
-                  </button>
+                    {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                  </Button>
                 </div>
               </div>
             </form>
 
             <div className="mt-5">
               <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                No tienes cuenta? {""}
+                No tienes cuenta?{" "}
                 <Link
-                  to=""
+                  to="/admin/sign-up"
                   className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
                 >
-                  Solicita Aquí
+                  Regístrate aquí
                 </Link>
               </p>
             </div>
@@ -98,6 +138,10 @@ const AuthForm: React.FC<{ controller: AuthController }> = ({ controller }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+export default AuthForm;
   );
 };
 

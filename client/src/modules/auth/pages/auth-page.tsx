@@ -4,7 +4,6 @@ import { useNavigate } from "react-router";
 import AuthForm from "../components/auth-form";
 import AuthLayout from "../components/auth-layout";
 import PageMeta from "../../common/pages/page-meta";
-import authController from "../controller/auth-controller";
 import Loader from "@/modules/common/components/ui/loader/loader";
 
 const AuthPage: React.FC = () => {
@@ -29,7 +28,7 @@ const AuthPage: React.FC = () => {
         </div>
       ) : (
         <AuthLayout>
-          <AuthForm controller={authController} />
+          <AuthForm />
         </AuthLayout>
       )}
     </>
