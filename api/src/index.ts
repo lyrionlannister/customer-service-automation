@@ -15,10 +15,11 @@ import { createAutomationAdminRouter } from "./automation/automation-admin.route
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
 const enableWhatsappListener = process.env.ENABLE_WHATSAPP_LISTENER === "true";
+const allowedOrigins = "http://localhost:4300"
 
 app.use(
   cors({
-    origin: "http://localhost:4300",
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
