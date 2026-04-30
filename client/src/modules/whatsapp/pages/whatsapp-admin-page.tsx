@@ -634,7 +634,7 @@ const WhatsAppAdminPage: React.FC = () => {
       <Modal
         isOpen={isQrModalOpen && Boolean(qrData.qr)}
         onClose={closeQrModal}
-        className="mx-4 max-w-105 p-6"
+        className="mx-4 max-w-120 p-6"
       >
         <div className="space-y-4">
           <div>
@@ -652,7 +652,7 @@ const WhatsAppAdminPage: React.FC = () => {
                 Escanea este QR desde tu app de WhatsApp Web.
               </div>
               <div className="flex justify-center rounded-3xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-                <QRCodeSVG value={qrData.qr} size={280} />
+                <QRCodeSVG value={qrData.qr} size={320} />
               </div>
               {formattedExpiration ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">

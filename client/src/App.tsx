@@ -32,23 +32,7 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <SignInLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route
-            path="/"
-            element={
-              <div className="flex items-center justify-center">
-                <img src="images/logo.png" />
-              </div>
-            }
-          />
-        </Route>
+        <Route path="/" element={<Navigate to="/admin/whatsapp" replace />} />
 
         {publicRoutes.map((route, index) => {
           const isAuthRoute =
@@ -81,6 +65,7 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="whatsapp" replace />} />
           {protectedRoutes.map((route, index) => (
             <Route
               key={`protected-${index}`}

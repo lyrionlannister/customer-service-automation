@@ -13,6 +13,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedTheme = localStorage.getItem("theme") as Theme | null;
     const initialTheme = savedTheme || "light";
 
+    if (initialTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
     setTheme(initialTheme);
     setIsInitialized(true);
   }, []);
