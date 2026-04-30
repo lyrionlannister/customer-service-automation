@@ -3,7 +3,7 @@ import AuthPage from "./modules/auth/pages/auth-page";
 import RegisterPage from "./modules/auth/pages/register-page";
 import NotFound from "./modules/common/pages/not-found";
 
-const noAuthRouter = [
+export const publicRoutes = [
   {
     path: "/admin/sign-in",
     element: <AuthPage />,
@@ -13,13 +13,16 @@ const noAuthRouter = [
     element: <RegisterPage />,
   },
   {
-    path: "/admin/whatsapp",
-    element: <WhatsAppAdminPage />,
-  },
-  {
     path: "*",
     element: <NotFound />,
   },
 ];
 
-export default noAuthRouter;
+export const protectedRoutes = [
+  {
+    path: "/admin/whatsapp",
+    element: <WhatsAppAdminPage />,
+  },
+];
+
+export default publicRoutes;

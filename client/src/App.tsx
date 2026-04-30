@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import SignInLayout from "./modules/common/layouts/sign-in-layout";
-import noAuthRouter from "./router";
+import { publicRoutes, protectedRoutes } from "./router";
 
 const isAuthenticated = (): boolean => {
   const token = sessionStorage.getItem("accessToken");
@@ -8,7 +8,9 @@ const isAuthenticated = (): boolean => {
   return Boolean(token && user);
 };
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   if (!isAuthenticated()) {
     return <Navigate to="/admin/sign-in" replace />;
   }
@@ -16,7 +18,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const LoginOnlyWhenLoggedOut: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const LoginOnlyWhenLoggedOut: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   if (isAuthenticated()) {
     return <Navigate to="/admin/whatsapp" replace />;
   }
@@ -46,16 +50,21 @@ const App: React.FC = () => {
           />
         </Route>
 
-        {noAuthRouter.map((route, index) => {
-          const isSignInRoute = route.path === "/admin/sign-in";
+        {publicRoutes.map((route, index) => {
+          const isAuthRoute =
+            route.path === "/admin/sign-in" || route.path === "/admin/sign-up";
 
           return (
             <Route
               key={index}
               path={route.path}
               element={
-                isSignInRoute ? (
-                  <LoginOnlyWhenLoggedOut>{route.element}</LoginOnlyWhenLoggedOut>
+                isAuthRoute ? (
+                  <LoginOnlyWhenLoggedOut>
+                    {route.element}
+                  </LoginOnlyWhenLoggedOut>
+                ) : route.path === "*" ? (
+                  route.element
                 ) : (
                   <ProtectedRoute>{route.element}</ProtectedRoute>
                 )
@@ -63,6 +72,23 @@ const App: React.FC = () => {
             />
           );
         })}
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <SignInLayout />
+            </ProtectedRoute>
+          }
+        >
+          {protectedRoutes.map((route, index) => (
+            <Route
+              key={`protected-${index}`}
+              path={route.path.replace("/admin/", "")}
+              element={route.element}
+            />
+          ))}
+        </Route>
       </Routes>
     </BrowserRouter>
   );

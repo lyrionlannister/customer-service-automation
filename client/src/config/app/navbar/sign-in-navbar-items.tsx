@@ -1,4 +1,5 @@
 import { GridIcon } from "../../../modules/common/icons";
+import { MessageCircle } from "lucide-react";
 
 const signInNavbarItems = [
   {
@@ -9,7 +10,7 @@ const signInNavbarItems = [
   },
   {
     name: "WhatsApp",
-    icon: <GridIcon />,
+    icon: <MessageCircle className="w-5 h-5" />,
     path: "/admin/whatsapp",
     new: false,
   },
