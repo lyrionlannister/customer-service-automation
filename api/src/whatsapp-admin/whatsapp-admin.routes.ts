@@ -31,6 +31,25 @@ export function createWhatsappAdminRouter(
     });
   });
 
+  router.get("/settings", async (_req, res) => {
+    const aiRepliesEnabled = await listener.getAiRepliesEnabled();
+    res.status(200).json({ aiRepliesEnabled });
+  });
+
+  router.patch("/settings", async (req, res) => {
+    const aiRepliesEnabled = req.body?.aiRepliesEnabled;
+
+    if (typeof aiRepliesEnabled !== "boolean") {
+      res.status(400).json({
+        error: "El campo aiRepliesEnabled es requerido y debe ser booleano",
+      });
+      return;
+    }
+
+    const updatedValue = await listener.setAiRepliesEnabled(aiRepliesEnabled);
+    res.status(200).json({ aiRepliesEnabled: updatedValue });
+  });
+
   router.get("/exclusions", async (_req, res) => {
     const exclusions = await exclusionsRepository.find({
       order: { createdAt: "DESC" },

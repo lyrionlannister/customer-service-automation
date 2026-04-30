@@ -5,6 +5,7 @@ import whatsappWeb from "whatsapp-web.js";
 import type { Client as WhatsAppClient } from "whatsapp-web.js";
 import AppDataSource from "../config/data-source.js";
 import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.js";
+import { WhatsappSettings } from "../whatsapp-admin/entities/whatsapp-settings.entity.js";
 import { normalizeWhatsappPhone } from "../whatsapp-admin/utils/phone-normalizer.js";
 
 const { Client, LocalAuth } = whatsappWeb;
@@ -17,7 +18,12 @@ export type WhatsappSessionStatus =
   | "ready"
   | "disconnected";
 
-type ListenerEventType = "qr" | "ready" | "disconnected" | "state_change";
+type ListenerEventType =
+  | "qr"
+  | "ready"
+  | "disconnected"
+  | "state_change"
+  | "ai_replies_setting";
 
 type ListenerEvent = {
   type: ListenerEventType;
@@ -113,6 +119,7 @@ export class WhatsappListener {
   private lastQr: string | null = null;
   private qrExpiresAt: string | null = null;
   private subscribers = new Set<(event: ListenerEvent) => void>();
+  private static readonly SETTINGS_ID = 1;
 
   private constructor(processor: WhatsappProcessor) {
     this.processor = processor;
@@ -229,6 +236,16 @@ export class WhatsappListener {
           return;
         }
 
+        const aiRepliesEnabled = await this.getAiRepliesEnabled();
+
+        if (!aiRepliesEnabled) {
+          console.log("Mensaje ignorado: respuestas con IA deshabilitadas", {
+            from: normalizedFrom,
+            body,
+          });
+          return;
+        }
+
         const message: IncomingMessage = {
           from: normalizedFrom,
           body: body,
@@ -287,6 +304,38 @@ export class WhatsappListener {
   private setStatus(status: WhatsappSessionStatus): void {
     this.status = status;
     this.emit("state_change", { status });
+  }
+
+  async getAiRepliesEnabled(): Promise<boolean> {
+    const settingsRepository = AppDataSource.getRepository(WhatsappSettings);
+    const settings = await settingsRepository.findOneBy({
+      id: WhatsappListener.SETTINGS_ID,
+    });
+
+    if (settings) {
+      return settings.aiRepliesEnabled;
+    }
+
+    const newSettings = settingsRepository.create({
+      id: WhatsappListener.SETTINGS_ID,
+      aiRepliesEnabled: true,
+    });
+
+    await settingsRepository.save(newSettings);
+    return newSettings.aiRepliesEnabled;
+  }
+
+  async setAiRepliesEnabled(aiRepliesEnabled: boolean): Promise<boolean> {
+    const settingsRepository = AppDataSource.getRepository(WhatsappSettings);
+    const settings =
+      (await settingsRepository.findOneBy({ id: WhatsappListener.SETTINGS_ID })) ??
+      settingsRepository.create({ id: WhatsappListener.SETTINGS_ID });
+
+    settings.aiRepliesEnabled = aiRepliesEnabled;
+    await settingsRepository.save(settings);
+
+    this.emit("ai_replies_setting", { aiRepliesEnabled });
+    return settings.aiRepliesEnabled;
   }
 }
 

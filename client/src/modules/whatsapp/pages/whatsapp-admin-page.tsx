@@ -14,6 +14,10 @@ type ExcludedPhone = {
   createdAt: string;
 };
 
+type WhatsappSettings = {
+  aiRepliesEnabled: boolean;
+};
+
 const WhatsAppAdminPage: React.FC = () => {
   const { apiClient } = useApiClient();
   const [status, setStatus] = useState<WhatsappStatus>("disconnected");
@@ -22,6 +26,8 @@ const WhatsAppAdminPage: React.FC = () => {
   const [qrError, setQrError] = useState<string | null>(null);
   const [exclusions, setExclusions] = useState<ExcludedPhone[]>([]);
   const [newPhone, setNewPhone] = useState("");
+  const [aiRepliesEnabled, setAiRepliesEnabled] = useState(true);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const fetchQr = async (): Promise<void> => {
     try {
@@ -51,6 +57,32 @@ const WhatsAppAdminPage: React.FC = () => {
 
     const payload = (await response.json()) as ExcludedPhone[];
     setExclusions(payload);
+  };
+
+  const fetchSettings = async (): Promise<void> => {
+    const response = await apiClient("/api/v1/whatsapp/settings");
+    if (!response.ok) return;
+
+    const payload = (await response.json()) as WhatsappSettings;
+    setAiRepliesEnabled(payload.aiRepliesEnabled);
+  };
+
+  const updateAiRepliesEnabled = async (nextValue: boolean): Promise<void> => {
+    try {
+      setIsSavingSettings(true);
+      const response = await apiClient("/api/v1/whatsapp/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aiRepliesEnabled: nextValue }),
+      });
+
+      if (!response.ok) return;
+
+      const payload = (await response.json()) as WhatsappSettings;
+      setAiRepliesEnabled(payload.aiRepliesEnabled);
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
   const createExclusion = async (): Promise<void> => {
@@ -92,6 +124,7 @@ const WhatsAppAdminPage: React.FC = () => {
       }
 
       await fetchExclusions();
+      await fetchSettings();
     };
 
     load().catch((error) => console.error("Error cargando estado de WhatsApp", error));
@@ -121,6 +154,13 @@ const WhatsAppAdminPage: React.FC = () => {
       setQrData({ qr: null });
     });
 
+    eventSource.addEventListener("ai_replies_setting", (event) => {
+      const payload = JSON.parse(event.data) as WhatsappSettings;
+      if (typeof payload.aiRepliesEnabled === "boolean") {
+        setAiRepliesEnabled(payload.aiRepliesEnabled);
+      }
+    });
+
     return () => {
       eventSource.close();
     };
@@ -132,6 +172,38 @@ const WhatsAppAdminPage: React.FC = () => {
       <p>
         Estado actual: <span className="font-semibold">{status}</span>
       </p>
+
+      <section className="space-y-2 rounded border border-gray-200 p-4">
+        <h2 className="text-xl font-semibold">Configuración de respuestas</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium">Responder con IA</p>
+            <p className="text-sm text-gray-600">
+              Estado: {aiRepliesEnabled ? "Activo" : "Silenciado"}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={aiRepliesEnabled}
+            disabled={isSavingSettings}
+            onClick={() => {
+              updateAiRepliesEnabled(!aiRepliesEnabled).catch((error) => {
+                console.error("Error actualizando configuración de IA", error);
+              });
+            }}
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors disabled:opacity-50 ${
+              aiRepliesEnabled ? "bg-emerald-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                aiRepliesEnabled ? "translate-x-7" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </section>
 
       <div className="space-y-4">
         <button
