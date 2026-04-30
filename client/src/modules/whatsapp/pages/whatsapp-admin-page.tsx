@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useApiClient } from "../../common/hooks/use-api-client";
 import useToast from "../../common/hooks/use-toast";
+import { useModal } from "../../common/hooks/use-modal";
 import Button from "@/modules/common/components/ui/button/button";
 import Input from "@/modules/common/components/ui/inputs/input";
 import Badge from "@/modules/common/components/ui/badge/badge";
+import Modal from "@/modules/common/components/ui/modal/modal";
 import {
   Table,
   TableHeader,
@@ -44,6 +46,8 @@ type AutomationConfig = {
 const WhatsAppAdminPage: React.FC = () => {
   const { apiClient } = useApiClient();
   const { showToast } = useToast();
+  const { isOpen: isQrModalOpen, openModal: openQrModal, closeModal: closeQrModal } =
+    useModal(false);
   const [status, setStatus] = useState<WhatsappStatus>("disconnected");
   const [qrData, setQrData] = useState<QrResponse>({ qr: null });
   const [isLoadingQr, setIsLoadingQr] = useState(false);
@@ -85,6 +89,9 @@ const WhatsAppAdminPage: React.FC = () => {
 
       const qrPayload = (await qrRes.json()) as QrResponse;
       setQrData(qrPayload);
+      if (qrPayload.qr) {
+        openQrModal();
+      }
     } catch (error) {
       console.error("Error solicitando QR de WhatsApp", error);
       setQrError("Ocurrió un error al solicitar el QR.");
@@ -297,6 +304,7 @@ const WhatsAppAdminPage: React.FC = () => {
       }
 
       setQrData({ qr: null });
+      closeQrModal();
       showToast({
         variant: "success",
         title: "Sesión de WhatsApp cerrada",
@@ -357,16 +365,21 @@ const WhatsAppAdminPage: React.FC = () => {
       const payload = JSON.parse(event.data) as QrResponse;
       setQrData(payload);
       setStatus("qr_required");
+      if (payload.qr) {
+        openQrModal();
+      }
     });
 
     eventSource.addEventListener("ready", () => {
       setStatus("ready");
       setQrData({ qr: null });
+      closeQrModal();
     });
 
     eventSource.addEventListener("disconnected", () => {
       setStatus("disconnected");
       setQrData({ qr: null });
+      closeQrModal();
     });
 
     eventSource.addEventListener("ai_replies_setting", (event) => {
@@ -379,7 +392,7 @@ const WhatsAppAdminPage: React.FC = () => {
     return () => {
       eventSource.close();
     };
-  }, [apiClient]);
+  }, [apiClient, closeQrModal, openQrModal]);
 
   return (
     <div className="mx-auto max-w-6xl p-6 space-y-6">
@@ -399,7 +412,7 @@ const WhatsAppAdminPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -450,30 +463,27 @@ const WhatsAppAdminPage: React.FC = () => {
                 Genera un nuevo QR para vincular la sesión de WhatsApp.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            {status === "ready" ? (
               <Button
                 variant="danger"
                 size="md"
-                className="min-w-[160px]"
+                className="min-w-40"
                 onClick={closeWhatsappSession}
                 disabled={isClosingWhatsappSession}
               >
                 {isClosingWhatsappSession ? "Cerrando..." : "Cerrar sesión WA"}
               </Button>
+            ) : (
               <Button
-                variant={status === "ready" ? "success" : "primary"}
+                variant="primary"
                 size="md"
-                className="min-w-[140px]"
+                className="min-w-35"
                 onClick={fetchQr}
-                disabled={isLoadingQr || status === "ready"}
+                disabled={isLoadingQr}
               >
-                {status === "ready"
-                  ? "Sesión Iniciada"
-                  : isLoadingQr
-                    ? "Solicitando..."
-                    : "Solicitar QR"}
+                {isLoadingQr ? "Solicitando..." : "Solicitar QR"}
               </Button>
-            </div>
+            )}
           </div>
 
           {qrError ? (
@@ -482,25 +492,16 @@ const WhatsAppAdminPage: React.FC = () => {
             </div>
           ) : null}
 
-          {qrData.qr ? (
-            <div className="space-y-4 pt-4">
-              <div className="rounded-3xl bg-gray-950 p-4 text-center text-sm text-white/80">
-                Escanea este QR desde tu app de WhatsApp Web.
-              </div>
-              <div className="flex justify-center rounded-3xl bg-white p-6 shadow-sm dark:bg-gray-900">
-                <QRCodeSVG value={qrData.qr} size={240} />
-              </div>
-              {formattedExpiration ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Expira el {formattedExpiration}
-                </p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="pt-4 text-sm text-gray-500 dark:text-gray-400">
-              No hay QR disponible en este momento.
+          <p className="pt-4 text-sm text-gray-500 dark:text-gray-400">
+            {qrData.qr
+              ? "QR disponible. Se muestra en un modal para escanearlo."
+              : "No hay QR disponible en este momento."}
+          </p>
+          {formattedExpiration ? (
+            <p className="pt-1 text-sm text-gray-500 dark:text-gray-400">
+              Expira el {formattedExpiration}
             </p>
-          )}
+          ) : null}
         </section>
       </div>
 
@@ -629,6 +630,43 @@ const WhatsAppAdminPage: React.FC = () => {
           </Table>
         </div>
       </section>
+
+      <Modal
+        isOpen={isQrModalOpen && Boolean(qrData.qr)}
+        onClose={closeQrModal}
+        className="mx-4 max-w-105 p-6"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
+              Escanea el QR
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Vincula esta sesión desde WhatsApp Web en tu teléfono.
+            </p>
+          </div>
+
+          {qrData.qr ? (
+            <div className="space-y-3">
+              <div className="rounded-3xl bg-gray-950 p-3 text-center text-sm text-white/80">
+                Escanea este QR desde tu app de WhatsApp Web.
+              </div>
+              <div className="flex justify-center rounded-3xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+                <QRCodeSVG value={qrData.qr} size={280} />
+              </div>
+              {formattedExpiration ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Expira el {formattedExpiration}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No hay QR disponible en este momento.
+            </p>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
