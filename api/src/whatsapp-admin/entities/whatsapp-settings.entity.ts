@@ -7,4 +7,7 @@ export class WhatsappSettings {
 
   @Column({ type: "boolean", default: true })
   aiRepliesEnabled!: boolean;
+
+  @Column({ type: "text", nullable: true })
+  automationUrl!: string | null;
 }

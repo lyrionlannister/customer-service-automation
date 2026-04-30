@@ -1,4 +1,4 @@
-import { AUTOMATION } from "../config/constants/automation.js";
+import { settingsService } from "../settings/settings.service.js";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import whatsappWeb from "whatsapp-web.js";
@@ -77,7 +77,8 @@ export class WhatsappProcessor {
     message: IncomingMessage,
   ): Promise<AutomationResponse | null> {
     try {
-      const response = await fetch(AUTOMATION, {
+      const automationUrl = await settingsService.getAutomationUrl();
+      const response = await fetch(automationUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

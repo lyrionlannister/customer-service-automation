@@ -10,6 +10,7 @@ import { AuthController } from "./auth/controllers/auth.controller.js";
 import { createAuthRouter } from "./auth/routes/auth.routes.js";
 import { createWhatsappAdminRouter } from "./whatsapp-admin/whatsapp-admin.routes.js";
 import { ExcludedPhone } from "./whatsapp-admin/entities/excluded-phone.entity.js";
+import { createAutomationAdminRouter } from "./automation/automation-admin.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -38,6 +39,7 @@ AppDataSource.initialize()
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
     app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
+    app.use("/api/v1/automation", createAutomationAdminRouter());
 
     app.get("/", (_req, res) => {
       res.status(200).json({
