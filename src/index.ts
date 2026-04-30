@@ -21,7 +21,10 @@ app.get("/health", (_req, res) => {
 });
 
 app.listen(port, "0.0.0.0", () => {
-  console.log(`Customer service listening on port ${port}`);
+  console.log(`Servidor de atención al cliente escuchando en el puerto ${port}`);
+  console.log(
+    `Listener de WhatsApp habilitado: ${enableWhatsappListener ? "sí" : "no"}`,
+  );
 
   if (enableWhatsappListener) {
     listener.start();

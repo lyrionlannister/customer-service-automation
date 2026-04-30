@@ -1,0 +1,906 @@
+{
+  "name": "customer-service-automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "97c71c06-20b2-4c12-a8be-16442536f909",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-736, -208],
+      "id": "9a701f8b-f1d3-4d06-8dd4-18d6e85fd737",
+      "name": "Webhook",
+      "webhookId": "97c71c06-20b2-4c12-a8be-16442536f909"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst context_id = body.from;\nconst message = String(body.body ?? '').trim();\n\nreturn [{\n  json: {\n    context_id,\n    message,\n    waitSeconds: 6,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-512, -208],
+      "id": "14789703-322b-45ac-b660-e945e50b5acf",
+      "name": "Preparar Mensaje"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "=buffer_in:{{$json.context_id}}",
+        "messageData": "={\"text\": \"{{ $json.message }}\", \"timestamp\": \"{{$now}}\"}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-288, -208],
+      "id": "6b3eb9ec-dda0-4287-aae1-a6b23247041b",
+      "name": "Buffer Redis",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=last_seen:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "value": "={{ $now.toMillis() }}",
+        "keyType": "string",
+        "expire": true,
+        "ttl": "={{ $('Preparar Mensaje').item.json.waitSeconds + 60 }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-64, -208],
+      "id": "b2227d43-fc80-4c7c-8cb8-6b913e7a1ecd",
+      "name": "Actualizar Ultimo Mensaje",
+      "alwaysOutputData": true,
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "waiting_reply",
+        "key": "=waiting_reply:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [160, -208],
+      "id": "94933fda-211b-400a-9739-e058b526e9e7",
+      "name": "Leer Espera Activa",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f106e69c-d5c8-4d30-8c02-3c3f1b64e4f6",
+              "leftValue": "={{ $json.waiting_reply != null && $json.waiting_reply !== '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [384, -208],
+      "id": "60298f83-0021-45a1-bb87-47e63b78147f",
+      "name": "Ya Hay Respuesta En Espera?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: \"\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [608, -304],
+      "id": "268de56e-9ac5-49ad-8839-9ac177fd8719",
+      "name": "Responder Sin Mensaje"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=waiting_reply:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "value": "true",
+        "expire": true,
+        "ttl": "={{ $('Preparar Mensaje').item.json.waitSeconds + 30 }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [608, -112],
+      "id": "daf345b9-98cf-420a-b35d-35fb408b89e3",
+      "name": "Marcar Espera Activa",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": "={{ $('Preparar Mensaje').item.json.waitSeconds }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [832, -112],
+      "id": "77417729-b728-48e0-ae5e-150ea7e4a651",
+      "name": "Esperar Buffer",
+      "webhookId": "bce3df94-a5d9-4cd5-85db-27e31ef71f43"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "buffer",
+        "key": "=buffer_in:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1056, -112],
+      "id": "fe8eddca-4d4d-422d-bc08-1121c1cd3b89",
+      "name": "Leer Buffer",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.buffer ?? [];\nconst entries = (Array.isArray(raw) ? raw : [raw])\n  .map((entry) => {\n    if (!entry) return null;\n    if (typeof entry !== 'string') return entry;\n    try {\n      return JSON.parse(entry);\n    } catch {\n      return { text: entry, timestamp: new Date().toISOString() };\n    }\n  })\n  .filter(Boolean)\n  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));\n\nconst message = entries\n  .map((entry) => String(entry.text ?? '').trim())\n  .filter(Boolean)\n  .join('\\n');\n\nreturn [{\n  json: {\n    context_id: $('Preparar Mensaje').item.json.context_id,\n    message: message || $('Preparar Mensaje').item.json.message,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, -112],
+      "id": "528ae104-fe4a-45e0-b4a4-2095751b7383",
+      "name": "Consolidar Buffer"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=buffer_in:{{ $('Consolidar Buffer').item.json.context_id }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1504, -112],
+      "id": "684ddcfd-aba2-4264-8860-cd6f794e7875",
+      "name": "Limpiar Buffer",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=waiting_reply:{{ $('Consolidar Buffer').item.json.context_id }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1728, -112],
+      "id": "b8508640-39e6-4961-b6b4-1aca90c43842",
+      "name": "Limpiar Espera",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8f5b59dd-7a9e-4df0-a66c-40c6b36f1021",
+              "leftValue": "={{ $('Consolidar Buffer').item.json.message.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[!¡¿?.,\\s]/g, '') }}",
+              "rightValue": "^(hola|buenas|buenosdias|buenastardes|buenasnoches|hello|hi|hey)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1952, -288],
+      "id": "8ea9eb8a-665e-44af-a5fa-9298d8c764d0",
+      "name": "Mensaje Solo Saludo?"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "current_route",
+        "key": "=conversation_route:{{ $('Consolidar Buffer').item.json.context_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [2176, -112],
+      "id": "49e2627c-a513-45a7-99b9-32053d201f70",
+      "name": "Leer Ruta Actual",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Mensajes recientes del cliente:\n{{ $('Consolidar Buffer').item.json.message }}\n\nRuta actual guardada:\n{{ $json.current_route || 'ninguna' }}",
+        "options": {
+          "systemMessage": "Eres un clasificador de intenciones para un local de reparaciones de celulares.\n\nClasifica la conversacion en una sola de estas categorias:\n- saludo: el cliente solo saluda, inicia conversacion o todavia no dijo en que necesita ayuda.\n- reparacion: el cliente quiere cotizar, consultar o iniciar una nueva reparacion de celular.\n- garantia: el cliente ya realizo una reparacion y escribe por un problema, reclamo, seguimiento o consulta relacionada con esa reparacion.\n- indeterminado: el cliente parece necesitar ayuda, pero todavia no hay datos suficientes para saber si es reparacion nueva o garantia.\n\nUsa los mensajes recientes y la ruta actual guardada. Si hay ruta actual guardada y el mensaje reciente parece una continuacion normal de esa conversacion, conserva esa ruta. Si no hay ruta actual y el cliente solo saluda, responde saludo. Si no hay ruta actual y la intencion no es clara, responde indeterminado.\n\nResponde solo con una palabra exacta: saludo, reparacion, garantia o indeterminado. No agregues explicaciones, saludos, puntuacion ni texto adicional."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [2400, -112],
+      "id": "6a0d0369-786e-4275-92d1-2cd5ec9f19b3",
+      "name": "Intent Classifier"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "40d45952-a334-427d-9e5c-e02e2834c37e",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "saludo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2752, -312],
+      "id": "f44fb8a6-dd33-4d37-a6f0-aaf4ff8676ec",
+      "name": "Es saludo?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: \"Bienvenido, ¿en que puedo ayudarte el dia de hoy?\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [2976, -512],
+      "id": "f6d1db19-4a24-4d1e-a3da-9a72691b411d",
+      "name": "Responder Bienvenida"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d4eec9f-9382-41e6-ad44-cb779f908f09",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "garantia",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2752, -112],
+      "id": "ca7f5c41-97be-4dad-bc79-39a70072fd56",
+      "name": "Es garantia?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d57b916b-f021-4bf4-b001-915e24e4a31b",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "reparacion",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2976, 88],
+      "id": "1eef99ef-53b5-4968-b62e-92c27aa77bc3",
+      "name": "Es reparacion?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: \"Claro, para ayudarte mejor, ¿me escribes por una reparacion nueva o por una garantia de una reparacion anterior?\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [3200, 288],
+      "id": "7c28bd14-f897-47a6-80f6-18edcf539df3",
+      "name": "Responder Aclaracion"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=conversation_route:{{ $('Consolidar Buffer').item.json.context_id }}",
+        "value": "garantia",
+        "expire": true,
+        "ttl": 86400
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [2976, -312],
+      "id": "12ef9e5d-8316-44ea-a8f6-8abb7b68235a",
+      "name": "Guardar Ruta Garantia",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=conversation_route:{{ $('Consolidar Buffer').item.json.context_id }}",
+        "value": "reparacion",
+        "expire": true,
+        "ttl": 86400
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [3200, 88],
+      "id": "bc64d789-2102-4ade-b788-abae5a96b3bc",
+      "name": "Guardar Ruta Reparacion",
+      "credentials": {
+        "redis": {
+          "id": "ObX0hQ1tvrTibXOr",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Consolidar Buffer').item.json.message }}",
+        "options": {
+          "systemMessage": "Eres el asistente virtual de un local de reparaciones de celulares. Atiendes clientes por WhatsApp con tono amable, claro y profesional.\n\nEl cliente escribe por garantia de una reparacion previa. Ayudalo a ubicar el caso y recopilar la informacion necesaria.\n\nPide nombre del cliente, modelo del celular, fecha aproximada de la reparacion, que reparacion se hizo y cual es el problema actual. Si ya dio alguno de esos datos, no lo repitas.\n\nNo prometas que la garantia aplica, no inventes politicas, precios ni tiempos. Indica que con esos datos se revisara el caso. Mantente breve y util."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [3200, -416],
+      "id": "dd494437-c738-4afa-b5fc-ce9a52bb59a3",
+      "name": "Agente Garantia"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Consolidar Buffer').item.json.message }}",
+        "options": {
+          "systemMessage": "Eres el asistente virtual de un local de reparaciones de celulares. Atiendes clientes por WhatsApp con tono amable, claro y profesional.\n\nEl cliente escribe por una reparacion nueva. Ayudalo a iniciar la consulta o cotizacion.\n\nPide los datos necesarios sin abrumar: modelo del celular, falla o problema, si recibio golpes/mojaduras y desde cuando ocurre. Si ya dio alguno de esos datos, no lo repitas.\n\nNo inventes precios, tiempos ni disponibilidad de piezas. Si falta informacion, solicitala. Mantente breve y util."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [3424, 88],
+      "id": "b9c28759-afa6-4cf0-a668-e8bd508443d1",
+      "name": "Agente Reparacion"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [3776, -112],
+      "id": "866abf52-9033-48d5-a4c2-e572ab85177d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [2400, 112],
+      "id": "d5318e50-4fc9-498e-9587-ce963868c402",
+      "name": "Modelo Clasificador",
+      "credentials": {
+        "openAiApi": {
+          "id": "RtacINYxEmPSnfES",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [3208, -192],
+      "id": "a2f5fb9d-b95d-4f36-a552-f4138ea220e3",
+      "name": "Modelo Garantia",
+      "credentials": {
+        "openAiApi": {
+          "id": "RtacINYxEmPSnfES",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [3496, 312],
+      "id": "bd757e14-39cb-49dd-835f-378a02e89988",
+      "name": "Modelo Reparacion",
+      "credentials": {
+        "openAiApi": {
+          "id": "RtacINYxEmPSnfES",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Consolidar Buffer').item.json.context_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [3336, -192],
+      "id": "df3bf26f-ce0d-466b-aefd-96e1fb3536b7",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "zdN4ibQRK92EFTtY",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Preparar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Buffer Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buffer Redis": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Ultimo Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Ultimo Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Leer Espera Activa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Espera Activa": {
+      "main": [
+        [
+          {
+            "node": "Ya Hay Respuesta En Espera?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ya Hay Respuesta En Espera?": {
+      "main": [
+        [
+          {
+            "node": "Responder Sin Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar Espera Activa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Espera Activa": {
+      "main": [
+        [
+          {
+            "node": "Esperar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Leer Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Buffer": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Espera",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Espera": {
+      "main": [
+        [
+          {
+            "node": "Mensaje Solo Saludo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje Solo Saludo?": {
+      "main": [
+        [
+          {
+            "node": "Responder Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer Ruta Actual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Ruta Actual": {
+      "main": [
+        [
+          {
+            "node": "Intent Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Clasificador": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Intent Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Classifier": {
+      "main": [
+        [
+          {
+            "node": "Es saludo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es saludo?": {
+      "main": [
+        [
+          {
+            "node": "Responder Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es garantia?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es garantia?": {
+      "main": [
+        [
+          {
+            "node": "Guardar Ruta Garantia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es reparacion?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es reparacion?": {
+      "main": [
+        [
+          {
+            "node": "Guardar Ruta Reparacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Aclaracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Ruta Garantia": {
+      "main": [
+        [
+          {
+            "node": "Agente Garantia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Ruta Reparacion": {
+      "main": [
+        [
+          {
+            "node": "Agente Reparacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Garantia": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Garantia",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Reparacion": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Reparacion",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Garantia",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Reparacion",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Garantia": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Reparacion": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2c4a3a52-cc71-4f59-a248-855b45d7ebb7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4aec0996fda5126066b771affed9118546abdea111a97eeb2bf3310467487606"
+  },
+  "id": "tgn5XDhSLMWTvREv",
+  "tags": []
+}
