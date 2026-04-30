@@ -1,14 +1,14 @@
 import { Outlet } from "react-router";
 
-import useSidebar from "../hooks/useSidebar";
-// import useAuthGuard from "../hooks/useAuthGuard";
-import AsideMenu from "../components/menu/AsideMenu";
-import NavbarMenu from "../components/menu/NavbarMenu";
-import SidebarProvider from "../contexts/providers/SidebarProvider";
+import useSidebar from "../hooks/use-sidebar";
+// import useAuthGuard from "../hooks/use-auth-guard";
+import AsideMenu from "../components/menu/aside-menu";
+import NavbarMenu from "../components/menu/navbar-menu";
+import SidebarProvider from "../contexts/providers/sidebar-provider";
 import signInNavbarItems, {
   otherSignInItems,
-} from "../../../config/app/navbar/SignInNavbarItems";
-import Backdrop from "../components/menu/Backdrop";
+} from "../../../config/app/navbar/sign-in-navbar-items";
+import Backdrop from "../components/menu/backdrop";
 
 const LayoutContent: React.FC = () => {
   //   useAuthGuard("/admin/sign-in");

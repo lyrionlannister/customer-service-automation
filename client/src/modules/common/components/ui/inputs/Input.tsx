@@ -1,4 +1,4 @@
-import InputProps from "../../../types/interfaces/props/InputProps";
+import InputProps from "../../../types/interfaces/props/input-props";
 
 const Input: React.FC<InputProps> = ({
   type = "text",

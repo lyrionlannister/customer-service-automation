@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
-import PageMeta from "./PageMeta";
-import useGoBack from "../hooks/useGoBack";
+import PageMeta from "./page-meta";
+import useGoBack from "../hooks/use-go-back";
 
 const NotFound: React.FC = () => {
   const goBack = useGoBack();

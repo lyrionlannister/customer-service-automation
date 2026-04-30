@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 
-import AuthForm from "../components/AuthForm";
-import AuthLayout from "../components/AuthLayout";
-import PageMeta from "../../common/pages/PageMeta";
-import authController from "../controller/authController";
-import Loader from "@/modules/common/components/ui/loader/Loader";
+import AuthForm from "../components/auth-form";
+import AuthLayout from "../components/auth-layout";
+import PageMeta from "../../common/pages/page-meta";
+import authController from "../controller/auth-controller";
+import Loader from "@/modules/common/components/ui/loader/loader";
 
 const AuthPage: React.FC = () => {
   const [loading, setLoading] = useState(true);

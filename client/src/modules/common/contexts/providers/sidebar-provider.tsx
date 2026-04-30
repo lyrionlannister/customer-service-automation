@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarContext from "../SidebarContext";
+import SidebarContext from "../sidebar-context";
 
 const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   children,

@@ -3,7 +3,7 @@ import TableProps, {
   TableBodyProps,
   TableRowProps,
   TableCellProps,
-} from "@/modules/common/types/interfaces/props/TableProps";
+} from "@/modules/common/types/interfaces/props/table-props";
 
 const Table: React.FC<TableProps> = ({ children, className }) => {
   return <table className={`min-w-full  ${className}`}>{children}</table>;

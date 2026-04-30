@@ -1,6 +1,6 @@
 import { Link } from "react-router";
-import AlertProps from "@/modules/common/types/interfaces/props/AlertProps";
-import { variantClasses, icons } from "@/modules/common/utils/alertUtils";
+import AlertProps from "@/modules/common/types/interfaces/props/alert-props";
+import { variantClasses, icons } from "@/modules/common/utils/alert-utils";
 
 /**
  * Componente visual para mostrar alertas informativas con estilos y variantes.

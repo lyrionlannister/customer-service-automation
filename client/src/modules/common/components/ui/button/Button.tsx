@@ -1,8 +1,8 @@
-import ButtonProps from "@/modules/common/types/interfaces/props/ButtonProps";
+import ButtonProps from "@/modules/common/types/interfaces/props/button-props";
 import {
   sizeClasses,
   variantClasses,
-} from "@/modules/common/utils/buttonUtils";
+} from "@/modules/common/utils/button-utils";
 
 const Button: React.FC<ButtonProps> = ({
   children,

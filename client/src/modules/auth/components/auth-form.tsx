@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { AuthController } from "../controller/authController";
-import Input from "../../common/components/ui/inputs/Input";
-import Label from "../../common/components/ui/inputs/Label";
+import { AuthController } from "../controller/auth-controller";
+import Input from "../../common/components/ui/inputs/input";
+import Label from "../../common/components/ui/inputs/label";
 import { EyeCloseIcon, EyeIcon } from "../../common/icons";
 
 import { useNavigate } from "react-router";

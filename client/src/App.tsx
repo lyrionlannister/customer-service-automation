@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router";
-import SignInLayout from "./modules/common/layouts/SignInLayout";
+import SignInLayout from "./modules/common/layouts/sign-in-layout";
 import noAuthRouter from "./router";
-import User from "./modules/common/types/auth/User";
+import User from "./modules/common/types/auth/user";
 
 const App: React.FC = () => {
   const setUserToTest = () => {

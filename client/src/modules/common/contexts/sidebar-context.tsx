@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import SidebarContextType from "../types/interfaces/contexts/SidebarContextType";
+import SidebarContextType from "../types/interfaces/contexts/sidebar-context-type";
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 

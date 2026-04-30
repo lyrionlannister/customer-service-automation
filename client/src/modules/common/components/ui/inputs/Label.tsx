@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { twMerge } from "tailwind-merge";
-import LabelProps from "../../../types/interfaces/props/LabelProps";
+import LabelProps from "../../../types/interfaces/props/label-props";
 
 const Label: FC<LabelProps> = ({ htmlFor, children, className }) => {
   return (

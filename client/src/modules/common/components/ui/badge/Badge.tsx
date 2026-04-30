@@ -1,9 +1,9 @@
-import BadgeProps from "@/modules/common/types/interfaces/props/BadgeProps";
+import BadgeProps from "@/modules/common/types/interfaces/props/badge-props";
 import {
   baseStyles,
   variants,
   sizeStyles,
-} from "@/modules/common/utils/badgeUtils";
+} from "@/modules/common/utils/badge-utils";
 
 const Badge: React.FC<BadgeProps> = ({
   variant = "light",

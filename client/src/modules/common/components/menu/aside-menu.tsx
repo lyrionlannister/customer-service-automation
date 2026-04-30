@@ -1,8 +1,8 @@
-import useSidebar from "../../hooks/useSidebar";
+import useSidebar from "../../hooks/use-sidebar";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { NavItem } from "../types/common/sidebarTypes";
+import type NavItem from "../../../../config/app/navbar/types/nav-item";
 
 import { ChevronDownIcon, HorizontaLDots } from "../../icons";
 

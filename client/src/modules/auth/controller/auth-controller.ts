@@ -1,6 +1,6 @@
 // import { jwtDecode } from "jwt-decode";
 
-import CommonController from "@/modules/common/controllers/CommonController";
+import CommonController from "@/modules/common/controllers/common-controller";
 
 export class AuthController extends CommonController {
   constructor() {

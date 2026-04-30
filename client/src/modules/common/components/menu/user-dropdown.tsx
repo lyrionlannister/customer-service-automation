@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 
-import User from "../../types/auth/User";
-import Dropdown from "../ui/dropdown/Dropdown";
+import User from "../../types/auth/user";
+import Dropdown from "../ui/dropdown/dropdown";
 
 const UserDropdown: React.FC = () => {
   const onLogout = () => {

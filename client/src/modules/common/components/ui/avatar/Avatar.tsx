@@ -1,10 +1,10 @@
-import AvatarProps from "@/modules/common/types/interfaces/props/AvatarProps";
+import AvatarProps from "@/modules/common/types/interfaces/props/avatar-props";
 
 import {
   sizeClasses,
   statusSizeClasses,
   statusColorClasses,
-} from "@/modules/common/utils/avatarUtils";
+} from "@/modules/common/utils/avatar-utils";
 
 const Avatar: React.FC<AvatarProps> = ({
   src,
