@@ -648,12 +648,18 @@ const WhatsAppAdminPage: React.FC = () => {
 
           {qrData.qr ? (
             <div className="space-y-3">
-              <div className="rounded-3xl bg-gray-950 p-3 text-center text-sm text-white/80">
+              <div className="rounded-2xl bg-gray-950 p-3 text-center text-sm text-white/80">
                 Escanea este QR desde tu app de WhatsApp Web.
               </div>
-              <div className="flex justify-center rounded-3xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-                <QRCodeSVG value={qrData.qr} size={320} />
+
+              <div className="rounded-3xl border border-gray-200 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800/40">
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_-12px_rgba(16,24,40,0.35)] dark:border-gray-600">
+                  <div className="flex justify-center rounded-xl border border-gray-100 bg-white p-2">
+                    <QRCodeSVG value={qrData.qr} size={320} />
+                  </div>
+                </div>
               </div>
+
               {formattedExpiration ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Expira el {formattedExpiration}
