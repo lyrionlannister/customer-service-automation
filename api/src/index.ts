@@ -4,11 +4,11 @@ import cors from "cors";
 import { getRepository } from "typeorm";
 import AppDataSource from "./config/data-source.js";
 import { listener } from "./whatsapp/whatsapp-service.js";
-import { User } from "./entities/user.entity.js";
-import { UserDao } from "./daos/user.dao.js";
-import { AuthService } from "./services/auth.service.js";
-import { AuthController } from "./controllers/auth.controller.js";
-import { createAuthRouter } from "./routes/auth.routes.js";
+import { User } from "./auth/entities/user.entity.js";
+import { UserDao } from "./auth/daos/user.dao.js";
+import { AuthService } from "./auth/services/auth.service.js";
+import { AuthController } from "./auth/controllers/auth.controller.js";
+import { createAuthRouter } from "./auth/routes/auth.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
