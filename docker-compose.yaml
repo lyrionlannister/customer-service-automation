@@ -6,12 +6,19 @@ services:
     container_name: customer-service-api
     environment:
       NODE_ENV: ${NODE_ENV:?NODE_ENV is required}
-      PORT: ${APP_CONTAINER_PORT:?APP_CONTAINER_PORT is required}
+      PORT: ${PORT:?PORT is required}
       AUTOMATION_URL: ${AUTOMATION_URL:?AUTOMATION_URL is required}
+      DB_HOST: ${DB_HOST:?DB_HOST is required}
+      DB_PORT: ${DB_PORT:?DB_PORT is required}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
       ENABLE_WHATSAPP_LISTENER: ${ENABLE_WHATSAPP_LISTENER:?ENABLE_WHATSAPP_LISTENER is required}
       WHATSAPP_AUTH_PATH: ${WHATSAPP_AUTH_PATH:?WHATSAPP_AUTH_PATH is required}
+      PUPPETEER_EXECUTABLE_PATH: ${PUPPETEER_EXECUTABLE_PATH}
     ports:
       - "${APP_PORT:?APP_PORT is required}:${APP_CONTAINER_PORT:?APP_CONTAINER_PORT is required}"
     volumes:

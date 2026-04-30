@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import express from "express";
+import cors from "cors";
 import { getRepository } from "typeorm";
 import AppDataSource from "./config/data-source.js";
 import { listener } from "./whatsapp/whatsapp-service.js";
@@ -13,6 +14,12 @@ const app = express();
 const port = Number(process.env.PORT ?? 3000);
 const enableWhatsappListener = process.env.ENABLE_WHATSAPP_LISTENER === "true";
 
+app.use(
+  cors({
+    origin: "http://localhost:4300",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Inicializar base de datos
