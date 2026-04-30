@@ -72,10 +72,11 @@ const AsideMenu: React.FC<{
         prevOpenSubmenu.index === index
       ) {
         return null;
-            ? "w-72.5"
+      }
+
       return { type: menuType, index };
-              ? "w-72.5"
-              : "w-22.5"
+    });
+  };
 
   const handleLogout = () => {
     sessionStorage.clear();
