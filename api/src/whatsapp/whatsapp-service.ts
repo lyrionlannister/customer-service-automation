@@ -3,11 +3,23 @@ import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import whatsappWeb from "whatsapp-web.js";
 import type { Client as WhatsAppClient } from "whatsapp-web.js";
-import qrcode from "qrcode-terminal";
 
 const { Client, LocalAuth } = whatsappWeb;
 const authPath = process.env.WHATSAPP_AUTH_PATH ?? ".wwebjs_auth";
 const clientId = "customer-service";
+
+export type WhatsappSessionStatus =
+  | "connecting"
+  | "qr_required"
+  | "ready"
+  | "disconnected";
+
+type ListenerEventType = "qr" | "ready" | "disconnected" | "state_change";
+
+type ListenerEvent = {
+  type: ListenerEventType;
+  data: Record<string, unknown>;
+};
 
 type IncomingMessage = {
   from: string;
@@ -94,6 +106,10 @@ export class WhatsappListener {
   private client: WhatsAppClient;
   private processor: WhatsappProcessor;
   private isStarted = false;
+  private status: WhatsappSessionStatus = "disconnected";
+  private lastQr: string | null = null;
+  private qrExpiresAt: string | null = null;
+  private subscribers = new Set<(event: ListenerEvent) => void>();
 
   private constructor(processor: WhatsappProcessor) {
     this.processor = processor;
@@ -134,11 +150,16 @@ export class WhatsappListener {
     }
 
     this.isStarted = true;
+    this.setStatus("connecting");
     console.log("Iniciando listener de WhatsApp...");
 
     this.client.on("qr", (qr) => {
-      console.log("Escanea este QR con WhatsApp:");
-      qrcode.generate(qr, { small: true });
+      const expiresAt = new Date(Date.now() + 60_000).toISOString();
+      this.lastQr = qr;
+      this.qrExpiresAt = expiresAt;
+      this.setStatus("qr_required");
+      this.emit("qr", { qr, expiresAt });
+      console.log("QR de WhatsApp generado y almacenado temporalmente");
     });
 
     this.client.on("loading_screen", (percent, message) => {
@@ -146,10 +167,15 @@ export class WhatsappListener {
     });
 
     this.client.on("ready", () => {
+      this.lastQr = null;
+      this.qrExpiresAt = null;
+      this.setStatus("ready");
+      this.emit("ready", {});
       console.log("WhatsApp listo");
     });
 
     this.client.on("change_state", (state) => {
+      this.emit("state_change", { state });
       console.log("Estado de WhatsApp:", state);
     });
 
@@ -162,6 +188,10 @@ export class WhatsappListener {
     });
 
     this.client.on("disconnected", (reason) => {
+      this.lastQr = null;
+      this.qrExpiresAt = null;
+      this.setStatus("disconnected");
+      this.emit("disconnected", { reason });
       console.warn("WhatsApp desconectado:", reason);
     });
 
@@ -203,8 +233,38 @@ export class WhatsappListener {
 
     this.client.initialize().catch((error) => {
       this.isStarted = false;
+      this.setStatus("disconnected");
       console.error("Error inicializando WhatsApp:", error);
     });
+  }
+
+  getStatus(): WhatsappSessionStatus {
+    return this.status;
+  }
+
+  getLastQr(): { qr: string | null; expiresAt?: string } {
+    if (!this.lastQr) return { qr: null };
+
+    return {
+      qr: this.lastQr,
+      ...(this.qrExpiresAt ? { expiresAt: this.qrExpiresAt } : {}),
+    };
+  }
+
+  subscribe(listener: (event: ListenerEvent) => void): () => void {
+    this.subscribers.add(listener);
+    return () => this.subscribers.delete(listener);
+  }
+
+  private emit(type: ListenerEventType, data: Record<string, unknown>): void {
+    for (const subscriber of this.subscribers) {
+      subscriber({ type, data });
+    }
+  }
+
+  private setStatus(status: WhatsappSessionStatus): void {
+    this.status = status;
+    this.emit("state_change", { status });
   }
 }
 

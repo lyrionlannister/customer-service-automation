@@ -1,0 +1,127 @@
+import { useEffect, useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { useApiClient } from "../../common/hooks/use-api-client";
+
+type WhatsappStatus = "connecting" | "qr_required" | "ready" | "disconnected";
+
+type QrResponse = {
+  qr: string | null;
+  expiresAt?: string;
+};
+
+const WhatsAppAdminPage: React.FC = () => {
+  const { apiClient } = useApiClient();
+  const [status, setStatus] = useState<WhatsappStatus>("disconnected");
+  const [qrData, setQrData] = useState<QrResponse>({ qr: null });
+  const [isLoadingQr, setIsLoadingQr] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+
+  const fetchQr = async (): Promise<void> => {
+    try {
+      setIsLoadingQr(true);
+      setQrError(null);
+
+      const qrRes = await apiClient("/api/v1/whatsapp/qr");
+
+      if (!qrRes.ok) {
+        setQrError("No se pudo obtener el QR. Intenta nuevamente.");
+        return;
+      }
+
+      const qrPayload = (await qrRes.json()) as QrResponse;
+      setQrData(qrPayload);
+    } catch (error) {
+      console.error("Error solicitando QR de WhatsApp", error);
+      setQrError("Ocurrió un error al solicitar el QR.");
+    } finally {
+      setIsLoadingQr(false);
+    }
+  };
+
+  const formattedExpiration = useMemo(() => {
+    if (!qrData.expiresAt) return null;
+    return new Date(qrData.expiresAt).toLocaleString();
+  }, [qrData.expiresAt]);
+
+  useEffect(() => {
+    const load = async () => {
+      const statusRes = await apiClient("/api/v1/whatsapp/status");
+
+      if (statusRes.ok) {
+        const statusPayload = (await statusRes.json()) as { status: WhatsappStatus };
+        setStatus(statusPayload.status);
+      }
+
+    };
+
+    load().catch((error) => console.error("Error cargando estado de WhatsApp", error));
+
+    const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
+    const eventsUrl = `${baseUrl}/api/v1/whatsapp/events`;
+    const eventSource = new EventSource(eventsUrl);
+
+    eventSource.addEventListener("state_change", (event) => {
+      const payload = JSON.parse(event.data) as { status?: WhatsappStatus };
+      if (payload.status) setStatus(payload.status);
+    });
+
+    eventSource.addEventListener("qr", (event) => {
+      const payload = JSON.parse(event.data) as QrResponse;
+      setQrData(payload);
+      setStatus("qr_required");
+    });
+
+    eventSource.addEventListener("ready", () => {
+      setStatus("ready");
+      setQrData({ qr: null });
+    });
+
+    eventSource.addEventListener("disconnected", () => {
+      setStatus("disconnected");
+      setQrData({ qr: null });
+    });
+
+    return () => {
+      eventSource.close();
+    };
+  }, [apiClient]);
+
+  return (
+    <div className="mx-auto max-w-2xl p-6 space-y-4">
+      <h1 className="text-2xl font-bold">WhatsApp Admin</h1>
+      <p>
+        Estado actual: <span className="font-semibold">{status}</span>
+      </p>
+
+      <button
+        className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+        disabled={isLoadingQr}
+        onClick={() => {
+          fetchQr().catch((error) => {
+            console.error("Error en solicitud de QR", error);
+          });
+        }}
+      >
+        {isLoadingQr ? "Solicitando..." : "Solicitar QR"}
+      </button>
+
+      {qrError ? <p className="text-sm text-red-500">{qrError}</p> : null}
+
+      {qrData.qr ? (
+        <div className="space-y-3">
+          <p className="font-medium">Escanea este código QR para autenticar la sesión.</p>
+          <div className="bg-white p-4 inline-block rounded">
+            <QRCodeSVG value={qrData.qr} size={280} />
+          </div>
+          {formattedExpiration ? (
+            <p className="text-sm text-gray-600">Expira: {formattedExpiration}</p>
+          ) : null}
+        </div>
+      ) : (
+        <p>No hay QR disponible en este momento.</p>
+      )}
+    </div>
+  );
+};
+
+export default WhatsAppAdminPage;
