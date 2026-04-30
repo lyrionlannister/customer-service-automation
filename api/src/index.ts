@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
-import { getRepository } from "typeorm";
 import AppDataSource from "./config/data-source.js";
 import { listener } from "./whatsapp/whatsapp-service.js";
 import { User } from "./auth/entities/user.entity.js";
@@ -10,6 +9,7 @@ import { AuthService } from "./auth/services/auth.service.js";
 import { AuthController } from "./auth/controllers/auth.controller.js";
 import { createAuthRouter } from "./auth/routes/auth.routes.js";
 import { createWhatsappAdminRouter } from "./whatsapp-admin/whatsapp-admin.routes.js";
+import { ExcludedPhone } from "./whatsapp-admin/entities/excluded-phone.entity.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -30,13 +30,14 @@ AppDataSource.initialize()
 
     // Configurar servicios y controladores
     const userRepository = AppDataSource.getRepository(User);
+    const exclusionsRepository = AppDataSource.getRepository(ExcludedPhone);
     const userDao = new UserDao(userRepository);
     const authService = new AuthService(userDao);
     const authController = new AuthController(authService);
 
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
-    app.use("/api/v1/whatsapp", createWhatsappAdminRouter());
+    app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
 
     app.get("/", (_req, res) => {
       res.status(200).json({

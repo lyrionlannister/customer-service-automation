@@ -9,12 +9,19 @@ type QrResponse = {
   expiresAt?: string;
 };
 
+type ExcludedPhone = {
+  phone: string;
+  createdAt: string;
+};
+
 const WhatsAppAdminPage: React.FC = () => {
   const { apiClient } = useApiClient();
   const [status, setStatus] = useState<WhatsappStatus>("disconnected");
   const [qrData, setQrData] = useState<QrResponse>({ qr: null });
   const [isLoadingQr, setIsLoadingQr] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
+  const [exclusions, setExclusions] = useState<ExcludedPhone[]>([]);
+  const [newPhone, setNewPhone] = useState("");
 
   const fetchQr = async (): Promise<void> => {
     try {
@@ -38,6 +45,38 @@ const WhatsAppAdminPage: React.FC = () => {
     }
   };
 
+  const fetchExclusions = async (): Promise<void> => {
+    const response = await apiClient("/api/v1/whatsapp/exclusions");
+    if (!response.ok) return;
+
+    const payload = (await response.json()) as ExcludedPhone[];
+    setExclusions(payload);
+  };
+
+  const createExclusion = async (): Promise<void> => {
+    const response = await apiClient("/api/v1/whatsapp/exclusions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: newPhone }),
+    });
+
+    if (!response.ok) return;
+
+    setNewPhone("");
+    await fetchExclusions();
+  };
+
+  const deleteExclusion = async (phone: string): Promise<void> => {
+    const encodedPhone = encodeURIComponent(phone);
+    const response = await apiClient(`/api/v1/whatsapp/exclusions/${encodedPhone}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) return;
+
+    await fetchExclusions();
+  };
+
   const formattedExpiration = useMemo(() => {
     if (!qrData.expiresAt) return null;
     return new Date(qrData.expiresAt).toLocaleString();
@@ -52,6 +91,7 @@ const WhatsAppAdminPage: React.FC = () => {
         setStatus(statusPayload.status);
       }
 
+      await fetchExclusions();
     };
 
     load().catch((error) => console.error("Error cargando estado de WhatsApp", error));
@@ -87,39 +127,101 @@ const WhatsAppAdminPage: React.FC = () => {
   }, [apiClient]);
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-4">
+    <div className="mx-auto max-w-2xl p-6 space-y-6">
       <h1 className="text-2xl font-bold">WhatsApp Admin</h1>
       <p>
         Estado actual: <span className="font-semibold">{status}</span>
       </p>
 
-      <button
-        className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-        disabled={isLoadingQr}
-        onClick={() => {
-          fetchQr().catch((error) => {
-            console.error("Error en solicitud de QR", error);
-          });
-        }}
-      >
-        {isLoadingQr ? "Solicitando..." : "Solicitar QR"}
-      </button>
+      <div className="space-y-4">
+        <button
+          className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+          disabled={isLoadingQr}
+          onClick={() => {
+            fetchQr().catch((error) => {
+              console.error("Error en solicitud de QR", error);
+            });
+          }}
+        >
+          {isLoadingQr ? "Solicitando..." : "Solicitar QR"}
+        </button>
 
-      {qrError ? <p className="text-sm text-red-500">{qrError}</p> : null}
+        {qrError ? <p className="text-sm text-red-500">{qrError}</p> : null}
 
-      {qrData.qr ? (
-        <div className="space-y-3">
-          <p className="font-medium">Escanea este código QR para autenticar la sesión.</p>
-          <div className="bg-white p-4 inline-block rounded">
-            <QRCodeSVG value={qrData.qr} size={280} />
+        {qrData.qr ? (
+          <div className="space-y-3">
+            <p className="font-medium">Escanea este código QR para autenticar la sesión.</p>
+            <div className="bg-white p-4 inline-block rounded">
+              <QRCodeSVG value={qrData.qr} size={280} />
+            </div>
+            {formattedExpiration ? (
+              <p className="text-sm text-gray-600">Expira: {formattedExpiration}</p>
+            ) : null}
           </div>
-          {formattedExpiration ? (
-            <p className="text-sm text-gray-600">Expira: {formattedExpiration}</p>
-          ) : null}
+        ) : (
+          <p>No hay QR disponible en este momento.</p>
+        )}
+      </div>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold">Teléfonos excluidos</h2>
+        <div className="flex gap-2">
+          <input
+            className="border rounded px-3 py-2 w-full"
+            placeholder="Ej: +54 11 1234 5678"
+            value={newPhone}
+            onChange={(event) => setNewPhone(event.target.value)}
+          />
+          <button
+            className="rounded bg-emerald-600 px-4 py-2 text-white disabled:opacity-50"
+            disabled={!newPhone.trim()}
+            onClick={() => {
+              createExclusion().catch((error) => {
+                console.error("Error creando exclusión", error);
+              });
+            }}
+          >
+            Agregar
+          </button>
         </div>
-      ) : (
-        <p>No hay QR disponible en este momento.</p>
-      )}
+
+        <table className="w-full border border-gray-200 rounded">
+          <thead>
+            <tr className="bg-gray-100 text-left">
+              <th className="p-2">Teléfono</th>
+              <th className="p-2">Creado</th>
+              <th className="p-2">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {exclusions.map((exclusion) => (
+              <tr key={exclusion.phone} className="border-t border-gray-200">
+                <td className="p-2">{exclusion.phone}</td>
+                <td className="p-2">{new Date(exclusion.createdAt).toLocaleString()}</td>
+                <td className="p-2">
+                  <button
+                    className="text-red-600"
+                    onClick={() => {
+                      deleteExclusion(exclusion.phone).catch((error) => {
+                        console.error("Error eliminando exclusión", error);
+                      });
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {exclusions.length === 0 ? (
+              <tr>
+                <td className="p-2 text-gray-500" colSpan={3}>
+                  Sin teléfonos excluidos.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 };

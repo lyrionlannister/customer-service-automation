@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { User } from "../auth/entities/user.entity.js";
+import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.js";
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -11,7 +12,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || "app_db",
   synchronize: true, // Auto-sync entities (deshabilitar en producción)
   logging: process.env.NODE_ENV === "development",
-  entities: [User],
+  entities: [User, ExcludedPhone],
 });
 
 export default AppDataSource;

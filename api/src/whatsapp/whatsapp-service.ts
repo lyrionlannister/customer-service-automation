@@ -3,6 +3,9 @@ import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import whatsappWeb from "whatsapp-web.js";
 import type { Client as WhatsAppClient } from "whatsapp-web.js";
+import AppDataSource from "../config/data-source.js";
+import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.js";
+import { normalizeWhatsappPhone } from "../whatsapp-admin/utils/phone-normalizer.js";
 
 const { Client, LocalAuth } = whatsappWeb;
 const authPath = process.env.WHATSAPP_AUTH_PATH ?? ".wwebjs_auth";
@@ -207,8 +210,27 @@ export class WhatsappListener {
           return;
         }
 
+        const normalizedFrom = normalizeWhatsappPhone(from);
+
+        if (!normalizedFrom) {
+          console.warn("No se pudo normalizar el teléfono origen, ignorando mensaje", { from });
+          return;
+        }
+
+        const exclusionsRepository = AppDataSource.getRepository(ExcludedPhone);
+        const isExcluded = await exclusionsRepository.exists({
+          where: { phone: normalizedFrom },
+        });
+
+        if (isExcluded) {
+          console.log("Mensaje ignorado por exclusión de teléfono", {
+            from: normalizedFrom,
+          });
+          return;
+        }
+
         const message: IncomingMessage = {
-          from: from,
+          from: normalizedFrom,
           body: body,
         };
 
@@ -223,7 +245,7 @@ export class WhatsappListener {
         }
 
         await this.processor.sendMessage(this.client, {
-          to: from,
+          to: normalizedFrom,
           body: automationResponse.reply,
         });
       } catch (error) {
