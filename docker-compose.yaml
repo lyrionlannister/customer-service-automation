@@ -1,0 +1,99 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: customer-service-app
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      AUTOMATION_URL: http://n8n:5678/webhook/customer-service
+      DATABASE_URL: postgres://customer_service:customer_service@postgres:5432/customer_service
+      REDIS_URL: redis://redis:6379
+      ENABLE_WHATSAPP_LISTENER: ${ENABLE_WHATSAPP_LISTENER:-false}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+    networks:
+      - customer-service
+
+  n8n:
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
+    container_name: customer-service-n8n
+    environment:
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8n
+      GENERIC_TIMEZONE: America/Mexico_City
+      TZ: America/Mexico_City
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - customer-service
+
+  postgres:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: customer-service-postgres
+    environment:
+      POSTGRES_USER: customer_service
+      POSTGRES_PASSWORD: customer_service
+      POSTGRES_DB: customer_service
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U customer_service -d customer_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - customer-service
+
+  redis:
+    build:
+      context: ./database
+      dockerfile: redis.Dockerfile
+    container_name: customer-service-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - customer-service
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+
+networks:
+  customer-service:
+    driver: bridge
