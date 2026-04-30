@@ -17,6 +17,11 @@ export function createWhatsappAdminRouter(
     res.status(200).json(listener.getLastQr());
   });
 
+  router.post("/session/logout", async (_req, res) => {
+    await listener.logoutSession();
+    res.status(200).json({ status: listener.getStatus() });
+  });
+
   router.get("/events", (_req, res) => {
     setupSseHeaders(res);
 

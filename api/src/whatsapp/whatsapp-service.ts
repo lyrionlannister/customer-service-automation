@@ -128,7 +128,11 @@ export class WhatsappListener {
     this.processor = processor;
     clearStaleChromiumLocks();
 
-    this.client = new Client({
+    this.client = this.createClient();
+  }
+
+  private createClient(): WhatsAppClient {
+    return new Client({
       authStrategy: new LocalAuth({
         clientId,
         dataPath: authPath,
@@ -285,6 +289,29 @@ export class WhatsappListener {
 
   getStatus(): WhatsappSessionStatus {
     return this.status;
+  }
+
+  async logoutSession(): Promise<void> {
+    try {
+      await this.client.logout();
+    } catch (error) {
+      console.warn("Error cerrando sesión de WhatsApp, continuando reinicio:", error);
+    }
+
+    try {
+      await this.client.destroy();
+    } catch (error) {
+      console.warn("Error destruyendo cliente de WhatsApp tras logout:", error);
+    }
+
+    this.isStarted = false;
+    this.lastQr = null;
+    this.qrExpiresAt = null;
+    this.setStatus("disconnected");
+
+    clearStaleChromiumLocks();
+    this.client = this.createClient();
+    this.start();
   }
 
   getLastQr(): { qr: string | null; expiresAt?: string } {

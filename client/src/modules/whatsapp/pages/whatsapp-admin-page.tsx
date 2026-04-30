@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useApiClient } from "../../common/hooks/use-api-client";
+import useToast from "../../common/hooks/use-toast";
 import Button from "@/modules/common/components/ui/button/button";
 import Input from "@/modules/common/components/ui/inputs/input";
 import Badge from "@/modules/common/components/ui/badge/badge";
@@ -42,6 +43,7 @@ type AutomationConfig = {
 
 const WhatsAppAdminPage: React.FC = () => {
   const { apiClient } = useApiClient();
+  const { showToast } = useToast();
   const [status, setStatus] = useState<WhatsappStatus>("disconnected");
   const [qrData, setQrData] = useState<QrResponse>({ qr: null });
   const [isLoadingQr, setIsLoadingQr] = useState(false);
@@ -54,6 +56,20 @@ const WhatsAppAdminPage: React.FC = () => {
   const [automationSource, setAutomationSource] = useState<"db" | "env">("env");
   const [isSavingAutomation, setIsSavingAutomation] = useState(false);
   const [automationError, setAutomationError] = useState<string | null>(null);
+  const [isClosingWhatsappSession, setIsClosingWhatsappSession] =
+    useState(false);
+
+  const parseErrorMessage = async (
+    response: Response,
+    fallbackMessage: string,
+  ): Promise<string> => {
+    try {
+      const payload = (await response.json()) as { error?: string };
+      return payload?.error || fallbackMessage;
+    } catch {
+      return fallbackMessage;
+    }
+  };
 
   const fetchQr = async (): Promise<void> => {
     try {
@@ -114,17 +130,32 @@ const WhatsAppAdminPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const payload = await response.json();
-        setAutomationError(payload?.error || "No se pudo guardar la URL");
+        const message = await parseErrorMessage(response, "No se pudo guardar la URL");
+        setAutomationError(message);
+        showToast({
+          variant: "error",
+          title: "Error al guardar URL",
+          message,
+        });
         return;
       }
 
       const payload = (await response.json()) as AutomationConfig;
       setAutomationUrl(payload.automationUrl);
       setAutomationSource(payload.source);
+      showToast({
+        variant: "success",
+        title: "URL guardada",
+        message: "La URL de automatización se actualizó correctamente.",
+      });
     } catch (error) {
       console.error("Error guardando URL de automatización", error);
       setAutomationError("Ocurrió un error al guardar la URL");
+      showToast({
+        variant: "error",
+        title: "Error al guardar URL",
+        message: "Ocurrió un error al guardar la URL.",
+      });
     } finally {
       setIsSavingAutomation(false);
     }
@@ -139,37 +170,148 @@ const WhatsAppAdminPage: React.FC = () => {
         body: JSON.stringify({ aiRepliesEnabled: nextValue }),
       });
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        const message = await parseErrorMessage(
+          response,
+          "No se pudo actualizar la configuración de IA",
+        );
+        showToast({
+          variant: "error",
+          title: "No se pudo actualizar IA",
+          message,
+        });
+        return;
+      }
 
       const payload = (await response.json()) as WhatsappSettings;
       setAiRepliesEnabled(payload.aiRepliesEnabled);
+      showToast({
+        variant: "success",
+        title: payload.aiRepliesEnabled ? "IA activada" : "IA desactivada",
+      });
+    } catch (error) {
+      console.error("Error actualizando configuración de IA", error);
+      showToast({
+        variant: "error",
+        title: "No se pudo actualizar IA",
+        message: "Ocurrió un error al actualizar la configuración.",
+      });
     } finally {
       setIsSavingSettings(false);
     }
   };
 
   const createExclusion = async (): Promise<void> => {
-    const response = await apiClient("/whatsapp/exclusions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: newPhone }),
-    });
+    try {
+      const response = await apiClient("/whatsapp/exclusions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: newPhone }),
+      });
 
-    if (!response.ok) return;
+      if (!response.ok) {
+        const message = await parseErrorMessage(response, "No se pudo excluir el teléfono");
+        showToast({
+          variant: "error",
+          title: "No se pudo guardar",
+          message,
+        });
+        return;
+      }
 
-    setNewPhone("");
-    await fetchExclusions();
+      setNewPhone("");
+      await fetchExclusions();
+      showToast({
+        variant: "success",
+        title: "Teléfono excluido",
+        message: "El número se agregó a la lista de exclusión.",
+      });
+    } catch (error) {
+      console.error("Error guardando teléfono excluido", error);
+      showToast({
+        variant: "error",
+        title: "No se pudo guardar",
+        message: "Ocurrió un error al guardar el teléfono excluido.",
+      });
+    }
   };
 
   const deleteExclusion = async (phone: string): Promise<void> => {
-    const encodedPhone = encodeURIComponent(phone);
-    const response = await apiClient(`/whatsapp/exclusions/${encodedPhone}`, {
-      method: "DELETE",
-    });
+    try {
+      const encodedPhone = encodeURIComponent(phone);
+      const response = await apiClient(`/whatsapp/exclusions/${encodedPhone}`, {
+        method: "DELETE",
+      });
 
-    if (!response.ok) return;
+      if (!response.ok) {
+        const message = await parseErrorMessage(response, "No se pudo eliminar el teléfono");
+        showToast({
+          variant: "error",
+          title: "No se pudo eliminar",
+          message,
+        });
+        return;
+      }
 
-    await fetchExclusions();
+      await fetchExclusions();
+      showToast({
+        variant: "success",
+        title: "Teléfono eliminado",
+      });
+    } catch (error) {
+      console.error("Error eliminando teléfono excluido", error);
+      showToast({
+        variant: "error",
+        title: "No se pudo eliminar",
+        message: "Ocurrió un error al eliminar el teléfono excluido.",
+      });
+    }
+  };
+
+  const closeWhatsappSession = async (): Promise<void> => {
+    try {
+      setIsClosingWhatsappSession(true);
+
+      const response = await apiClient("/whatsapp/session/logout", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const message = await parseErrorMessage(
+          response,
+          "No se pudo cerrar la sesión de WhatsApp",
+        );
+        showToast({
+          variant: "error",
+          title: "No se pudo cerrar sesión",
+          message,
+        });
+        return;
+      }
+
+      const payload = (await response.json()) as { status?: WhatsappStatus };
+      if (payload.status) {
+        setStatus(payload.status);
+      } else {
+        setStatus("disconnected");
+      }
+
+      setQrData({ qr: null });
+      showToast({
+        variant: "success",
+        title: "Sesión de WhatsApp cerrada",
+        message: "Se reinició la sesión. Solicita un QR para volver a vincular.",
+      });
+    } catch (error) {
+      console.error("Error cerrando sesión de WhatsApp", error);
+      showToast({
+        variant: "error",
+        title: "No se pudo cerrar sesión",
+        message: "Ocurrió un error al cerrar la sesión de WhatsApp.",
+      });
+    } finally {
+      setIsClosingWhatsappSession(false);
+    }
   };
 
   const formattedExpiration = useMemo(() => {
@@ -308,19 +450,30 @@ const WhatsAppAdminPage: React.FC = () => {
                 Genera un nuevo QR para vincular la sesión de WhatsApp.
               </p>
             </div>
-            <Button
-              variant={status === "ready" ? "success" : "primary"}
-              size="md"
-              className="min-w-[140px]"
-              onClick={fetchQr}
-              disabled={isLoadingQr || status === "ready"}
-            >
-              {status === "ready"
-                ? "Sesión Iniciada"
-                : isLoadingQr
-                  ? "Solicitando..."
-                  : "Solicitar QR"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="danger"
+                size="md"
+                className="min-w-[160px]"
+                onClick={closeWhatsappSession}
+                disabled={isClosingWhatsappSession}
+              >
+                {isClosingWhatsappSession ? "Cerrando..." : "Cerrar sesión WA"}
+              </Button>
+              <Button
+                variant={status === "ready" ? "success" : "primary"}
+                size="md"
+                className="min-w-[140px]"
+                onClick={fetchQr}
+                disabled={isLoadingQr || status === "ready"}
+              >
+                {status === "ready"
+                  ? "Sesión Iniciada"
+                  : isLoadingQr
+                    ? "Solicitando..."
+                    : "Solicitar QR"}
+              </Button>
+            </div>
           </div>
 
           {qrError ? (

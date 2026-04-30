@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import useSidebar from "../../hooks/use-sidebar";
 import UserDropdown from "./user-dropdown";
 import ThemeToggleButton from "./theme-toggle-button";
 
 const NavbarMenu: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -20,6 +21,11 @@ const NavbarMenu: React.FC = () => {
 
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    navigate("/admin/sign-in", { replace: true });
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +123,13 @@ const NavbarMenu: React.FC = () => {
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
             <ThemeToggleButton />
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Cerrar sesion
+            </button>
           </div>
           <UserDropdown />
         </div>
