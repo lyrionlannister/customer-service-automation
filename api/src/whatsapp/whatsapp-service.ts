@@ -210,20 +210,22 @@ export class WhatsappListener {
 
     this.client.on("message", async (msg) => {
       try {
-        const { from, body, fromMe } = msg;
+        const { from: chatId, body, fromMe } = msg;
 
         if (!body) return;
         if (fromMe) return;
 
-        if (from === "status@broadcast" || from.endsWith("@g.us")) {
+        if (chatId === "status@broadcast" || chatId.endsWith("@g.us")) {
           console.warn("Mensaje recibido de un broadcast o grupo, ignorando");
           return;
         }
 
-        const normalizedFrom = normalizeWhatsappPhone(from);
+        const normalizedFrom = normalizeWhatsappPhone(chatId);
 
         if (!normalizedFrom) {
-          console.warn("No se pudo normalizar el teléfono origen, ignorando mensaje", { from });
+          console.warn("No se pudo normalizar el teléfono origen, ignorando mensaje", {
+            from: chatId,
+          });
           return;
         }
 
@@ -265,7 +267,8 @@ export class WhatsappListener {
         }
 
         await this.processor.sendMessage(this.client, {
-          to: normalizedFrom,
+          // Reply to the original WhatsApp chat id to preserve LID-based users.
+          to: chatId,
           body: automationResponse.reply,
         });
       } catch (error) {
