@@ -13,7 +13,7 @@ const AuthPage: React.FC = () => {
   useEffect(() => {
     const checkLogin = sessionStorage.getItem("accessToken");
     if (checkLogin) {
-      navigate("/admin/dashboard", { replace: true });
+      navigate("/admin/whatsapp", { replace: true });
     } else {
       setLoading(false);
     }

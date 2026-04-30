@@ -1,9 +1,11 @@
 import { hash, compare } from "bcryptjs";
-import { sign } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { UserDao } from "../daos/user.dao.js";
 import { RegisterUserDto } from "../dtos/register-user.dto.js";
 import { LoginUserDto } from "../dtos/login-user.dto.js";
 import { User } from "../entities/user.entity.js";
+
+const { sign } = jwt;
 
 export class AuthService {
   constructor(private userDao: UserDao) {}

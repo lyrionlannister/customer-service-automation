@@ -26,6 +26,17 @@ export const useRegister = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const safeReadJson = async <T>(response: Response): Promise<T | null> => {
+    const raw = await response.text();
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  };
+
   const register = async (
     data: RegisterPayload,
   ): Promise<RegisterResponse | null> => {
@@ -43,11 +54,15 @@ export const useRegister = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error en el registro");
+        const errorData = await safeReadJson<{ error?: string }>(response);
+        throw new Error(errorData?.error || "Error en el registro");
       }
 
-      const result: RegisterResponse = await response.json();
+      const result = await safeReadJson<RegisterResponse>(response);
+      if (!result?.user) {
+        throw new Error("Respuesta invalida del servidor al registrar usuario");
+      }
+
       setSuccess(true);
       setLoading(false);
       return result;

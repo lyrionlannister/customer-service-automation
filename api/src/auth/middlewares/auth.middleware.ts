@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { verify } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+
+const { verify } = jwt;
 
 export interface AuthenticatedRequest extends Request {
   user?: { id: string; email: string };

@@ -34,7 +34,7 @@ const WhatsAppAdminPage: React.FC = () => {
       setIsLoadingQr(true);
       setQrError(null);
 
-      const qrRes = await apiClient("/api/v1/whatsapp/qr");
+      const qrRes = await apiClient("/whatsapp/qr");
 
       if (!qrRes.ok) {
         setQrError("No se pudo obtener el QR. Intenta nuevamente.");
@@ -52,7 +52,7 @@ const WhatsAppAdminPage: React.FC = () => {
   };
 
   const fetchExclusions = async (): Promise<void> => {
-    const response = await apiClient("/api/v1/whatsapp/exclusions");
+    const response = await apiClient("/whatsapp/exclusions");
     if (!response.ok) return;
 
     const payload = (await response.json()) as ExcludedPhone[];
@@ -60,7 +60,7 @@ const WhatsAppAdminPage: React.FC = () => {
   };
 
   const fetchSettings = async (): Promise<void> => {
-    const response = await apiClient("/api/v1/whatsapp/settings");
+    const response = await apiClient("/whatsapp/settings");
     if (!response.ok) return;
 
     const payload = (await response.json()) as WhatsappSettings;
@@ -70,7 +70,7 @@ const WhatsAppAdminPage: React.FC = () => {
   const updateAiRepliesEnabled = async (nextValue: boolean): Promise<void> => {
     try {
       setIsSavingSettings(true);
-      const response = await apiClient("/api/v1/whatsapp/settings", {
+      const response = await apiClient("/whatsapp/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ aiRepliesEnabled: nextValue }),
@@ -86,7 +86,7 @@ const WhatsAppAdminPage: React.FC = () => {
   };
 
   const createExclusion = async (): Promise<void> => {
-    const response = await apiClient("/api/v1/whatsapp/exclusions", {
+    const response = await apiClient("/whatsapp/exclusions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: newPhone }),
@@ -100,7 +100,7 @@ const WhatsAppAdminPage: React.FC = () => {
 
   const deleteExclusion = async (phone: string): Promise<void> => {
     const encodedPhone = encodeURIComponent(phone);
-    const response = await apiClient(`/api/v1/whatsapp/exclusions/${encodedPhone}`, {
+    const response = await apiClient(`/whatsapp/exclusions/${encodedPhone}`, {
       method: "DELETE",
     });
 
@@ -116,7 +116,7 @@ const WhatsAppAdminPage: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const statusRes = await apiClient("/api/v1/whatsapp/status");
+      const statusRes = await apiClient("/whatsapp/status");
 
       if (statusRes.ok) {
         const statusPayload = (await statusRes.json()) as { status: WhatsappStatus };
@@ -130,7 +130,7 @@ const WhatsAppAdminPage: React.FC = () => {
     load().catch((error) => console.error("Error cargando estado de WhatsApp", error));
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-    const eventsUrl = `${baseUrl}/api/v1/whatsapp/events`;
+    const eventsUrl = `${baseUrl}/whatsapp/events`;
     const eventSource = new EventSource(eventsUrl);
 
     eventSource.addEventListener("state_change", (event) => {

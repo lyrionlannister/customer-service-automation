@@ -10,6 +10,8 @@ import { normalizeWhatsappPhone } from "../whatsapp-admin/utils/phone-normalizer
 
 const { Client, LocalAuth } = whatsappWeb;
 const authPath = process.env.WHATSAPP_AUTH_PATH ?? ".wwebjs_auth";
+const puppeteerExecutablePath =
+  process.env.PUPPETEER_EXECUTABLE_PATH?.trim() || "/usr/bin/chromium";
 const clientId = "customer-service";
 
 export type WhatsappSessionStatus =
@@ -133,7 +135,7 @@ export class WhatsappListener {
       }),
       puppeteer: {
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+        executablePath: puppeteerExecutablePath,
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",

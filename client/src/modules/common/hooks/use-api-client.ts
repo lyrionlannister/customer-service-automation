@@ -10,6 +10,12 @@ export const useApiClient = () => {
       throw new Error("Endpoint must start with a slash (/)");
     }
 
+    if (!API_BASE_URL || typeof API_BASE_URL !== "string") {
+      throw new Error(
+        "VITE_API_BASE_URL no esta configurada. Define esta variable en el entorno del client.",
+      );
+    }
+
     const url = `${API_BASE_URL}${endpoint}`;
     return sendRequest(url, options);
   };
