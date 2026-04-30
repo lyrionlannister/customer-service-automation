@@ -1,9 +1,9 @@
 services:
-  app:
+  api:
     build:
-      context: .
+      context: ./api
       dockerfile: Dockerfile
-    container_name: customer-service-app
+    container_name: customer-service-api
     environment:
       NODE_ENV: ${NODE_ENV:?NODE_ENV is required}
       PORT: ${APP_CONTAINER_PORT:?APP_CONTAINER_PORT is required}
@@ -28,7 +28,10 @@ services:
       - customer-service
 
   n8n:
-    image: ${N8N_IMAGE:?N8N_IMAGE is required}
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
+    image: customer-service-n8n
     container_name: customer-service-n8n
     environment:
       N8N_HOST: ${N8N_HOST:?N8N_HOST is required}
@@ -71,7 +74,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U customer_service -d customer_service"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?POSTGRES_USER is required} -d ${POSTGRES_DB:?POSTGRES_DB is required}"]
       interval: 10s
       timeout: 5s
       retries: 5
