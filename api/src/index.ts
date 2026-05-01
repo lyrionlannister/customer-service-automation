@@ -2,6 +2,7 @@ import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import AppDataSource from "./config/data-source.js";
+import CustomerServiceDataSource from "./config/customer-service-data-source.js";
 import { listener } from "./whatsapp/whatsapp-service.js";
 import { User } from "./auth/entities/user.entity.js";
 import { UserDao } from "./auth/daos/user.dao.js";
@@ -11,6 +12,12 @@ import { createAuthRouter } from "./auth/routes/auth.routes.js";
 import { createWhatsappAdminRouter } from "./whatsapp-admin/whatsapp-admin.routes.js";
 import { ExcludedPhone } from "./whatsapp-admin/entities/excluded-phone.entity.js";
 import { createAutomationAdminRouter } from "./automation/automation-admin.routes.js";
+import { ChatHistory } from "./chats/entities/chat-history.entity.js";
+import { ContactName } from "./chats/entities/contact-name.entity.js";
+import { ChatHistoryDao } from "./chats/daos/chat-history.dao.js";
+import { ChatsService } from "./chats/services/chats.service.js";
+import { ChatsController } from "./chats/controllers/chats.controller.js";
+import { createChatsRouter } from "./chats/routes/chats.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -25,10 +32,10 @@ app.use(
 );
 app.use(express.json());
 
-// Inicializar base de datos
-AppDataSource.initialize()
+// Inicializar bases de datos
+Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()])
   .then(() => {
-    console.log("Base de datos conectada exitosamente");
+    console.log("Bases de datos conectadas exitosamente");
 
     // Configurar servicios y controladores
     const userRepository = AppDataSource.getRepository(User);
@@ -37,10 +44,17 @@ AppDataSource.initialize()
     const authService = new AuthService(userDao);
     const authController = new AuthController(authService);
 
+    const chatHistoryRepository = CustomerServiceDataSource.getRepository(ChatHistory);
+    const contactNameRepository = AppDataSource.getRepository(ContactName);
+    const chatHistoryDao = new ChatHistoryDao(chatHistoryRepository);
+    const chatsService = new ChatsService(chatHistoryDao, contactNameRepository);
+    const chatsController = new ChatsController(chatsService);
+
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
     app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
     app.use("/api/v1/automation", createAutomationAdminRouter());
+    app.use("/api/v1/chats", createChatsRouter(chatsController));
 
     app.get("/", (_req, res) => {
       res.status(200).json({
@@ -69,6 +83,6 @@ AppDataSource.initialize()
     });
   })
   .catch((error) => {
-    console.error("Error al conectar la base de datos:", error);
+    console.error("Error al conectar las bases de datos:", error);
     process.exit(1);
   });

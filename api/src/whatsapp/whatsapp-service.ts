@@ -6,7 +6,7 @@ import type { Client as WhatsAppClient } from "whatsapp-web.js";
 import AppDataSource from "../config/data-source.js";
 import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.js";
 import { WhatsappSettings } from "../whatsapp-admin/entities/whatsapp-settings.entity.js";
-import { normalizeWhatsappPhone } from "../whatsapp-admin/utils/phone-normalizer.js";
+import { ContactName } from "../chats/entities/contact-name.entity.js";
 
 const { Client, LocalAuth } = whatsappWeb;
 const authPath = process.env.WHATSAPP_AUTH_PATH ?? ".wwebjs_auth";
@@ -224,39 +224,43 @@ export class WhatsappListener {
           return;
         }
 
-        const normalizedFrom = normalizeWhatsappPhone(chatId);
+        // getContact() resuelve el teléfono real incluso para usuarios con LID (@lid)
+        const contact = await msg.getContact();
+        const phone = contact.id.user;
 
-        if (!normalizedFrom) {
-          console.warn("No se pudo normalizar el teléfono origen, ignorando mensaje", {
-            from: chatId,
-          });
+        if (!phone) {
+          console.warn("No se pudo obtener el teléfono del contacto, ignorando mensaje", { from: chatId });
           return;
         }
 
+        const normalizedPhone = `${phone}@c.us`;
+
         const exclusionsRepository = AppDataSource.getRepository(ExcludedPhone);
         const isExcluded = await exclusionsRepository.exists({
-          where: { phone: normalizedFrom },
+          where: { phone: normalizedPhone },
         });
 
         if (isExcluded) {
-          console.log("Mensaje ignorado por exclusión de teléfono", {
-            from: normalizedFrom,
-          });
+          console.log("Mensaje ignorado por exclusión de teléfono", { from: phone });
           return;
         }
 
         const aiRepliesEnabled = await this.getAiRepliesEnabled();
 
         if (!aiRepliesEnabled) {
-          console.log("Mensaje ignorado: respuestas con IA deshabilitadas", {
-            from: normalizedFrom,
-            body,
-          });
+          console.log("Mensaje ignorado: respuestas con IA deshabilitadas", { from: phone, body });
           return;
         }
 
+        const name = contact.name || contact.pushname;
+        if (name) {
+          AppDataSource.getRepository(ContactName)
+            .save({ phone, name })
+            .catch((err) => console.warn("Error guardando nombre de contacto:", err));
+        }
+
         const message: IncomingMessage = {
-          from: normalizedFrom,
+          from: phone,
           body: body,
         };
 

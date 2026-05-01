@@ -19,8 +19,8 @@ type WhatsappStatus = "connecting" | "qr_required" | "ready" | "disconnected";
 
 const statusStyles: Record<WhatsappStatus, { label: string; color: string }> = {
   connecting: { label: "Conectando", color: "secondary" },
-  qr_required: { label: "QR requerido", color: "warning" },
-  ready: { label: "Listo", color: "success" },
+  qr_required: { label: "Requiere vinculación", color: "warning" },
+  ready: { label: "Conectado", color: "success" },
   disconnected: { label: "Desconectado", color: "danger" },
 };
 
@@ -395,15 +395,15 @@ const WhatsAppAdminPage: React.FC = () => {
   }, [apiClient, closeQrModal, openQrModal]);
 
   return (
-    <div className="mx-auto max-w-6xl p-6 space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">
-              WhatsApp Admin
+              WhatsApp
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Gestiona la conexión de WhatsApp, el QR y los teléfonos excluidos.
+              Controla la conexión, las respuestas automáticas y los contactos excluidos.
             </p>
           </div>
           <Badge color={statusStyles[status].color} variant="solid" size="lg">
@@ -420,7 +420,7 @@ const WhatsAppAdminPage: React.FC = () => {
                 Respuestas automáticas
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500">
-                Controla el uso de IA para responder mensajes entrantes.
+                Activa o desactiva las respuestas automáticas con inteligencia artificial.
               </p>
             </div>
             <Button
@@ -429,22 +429,22 @@ const WhatsAppAdminPage: React.FC = () => {
               onClick={() => updateAiRepliesEnabled(!aiRepliesEnabled)}
               disabled={isSavingSettings}
             >
-              {aiRepliesEnabled ? "Desactivar IA" : "Activar IA"}
+              {aiRepliesEnabled ? "Desactivar respuestas" : "Activar respuestas"}
             </Button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Estado de IA
+                Respuestas automáticas
               </p>
               <p className="mt-2 text-xl font-semibold">
-                {aiRepliesEnabled ? "Activo" : "Silenciado"}
+                {aiRepliesEnabled ? "Activadas" : "Desactivadas"}
               </p>
             </div>
             <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Último estado
+                Estado de conexión
               </p>
               <p className="mt-2 text-xl font-semibold">
                 {statusStyles[status].label}
@@ -457,10 +457,10 @@ const WhatsAppAdminPage: React.FC = () => {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
-                Autenticación QR
+                Vincular dispositivo
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-500">
-                Genera un nuevo QR para vincular la sesión de WhatsApp.
+                Escanea el código con tu teléfono para conectar WhatsApp.
               </p>
             </div>
             {status === "ready" ? (
@@ -471,7 +471,7 @@ const WhatsAppAdminPage: React.FC = () => {
                 onClick={closeWhatsappSession}
                 disabled={isClosingWhatsappSession}
               >
-                {isClosingWhatsappSession ? "Cerrando..." : "Cerrar sesión WA"}
+                {isClosingWhatsappSession ? "Desconectando..." : "Desconectar dispositivo"}
               </Button>
             ) : (
               <Button
@@ -481,7 +481,7 @@ const WhatsAppAdminPage: React.FC = () => {
                 onClick={fetchQr}
                 disabled={isLoadingQr}
               >
-                {isLoadingQr ? "Solicitando..." : "Solicitar QR"}
+                {isLoadingQr ? "Generando..." : "Generar código QR"}
               </Button>
             )}
           </div>
@@ -494,8 +494,8 @@ const WhatsAppAdminPage: React.FC = () => {
 
           <p className="pt-4 text-sm text-gray-500 dark:text-gray-400">
             {qrData.qr
-              ? "QR disponible. Se muestra en un modal para escanearlo."
-              : "No hay QR disponible en este momento."}
+              ? "Código listo. Ábrelo para escanearlo con tu teléfono."
+              : "No hay código disponible. Genera uno para vincular tu dispositivo."}
           </p>
           {formattedExpiration ? (
             <p className="pt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -509,17 +509,17 @@ const WhatsAppAdminPage: React.FC = () => {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
-              URL de automatización
+              Servicio de automatización
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500">
-              Guarda la URL que el backend usará para enviar mensajes a n8n.
+              Configura el enlace del servicio encargado de procesar y enviar mensajes automáticos.
             </p>
           </div>
           <Badge
             color={automationSource === "db" ? "success" : "secondary"}
             size="sm"
           >
-            {automationSource === "db" ? "Guardada en DB" : "Valor por entorno"}
+            {automationSource === "db" ? "Personalizada" : "Por defecto"}
           </Badge>
         </div>
 
@@ -534,7 +534,7 @@ const WhatsAppAdminPage: React.FC = () => {
             onClick={saveAutomationUrl}
             disabled={!automationUrl.trim() || isSavingAutomation}
           >
-            {isSavingAutomation ? "Guardando..." : "Guardar URL"}
+            {isSavingAutomation ? "Guardando..." : "Guardar"}
           </Button>
         </div>
 
@@ -552,7 +552,7 @@ const WhatsAppAdminPage: React.FC = () => {
               Teléfonos excluidos
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500">
-              Agrega números que no deben recibir respuestas automáticas.
+              Estos números no recibirán respuestas automáticas.
             </p>
           </div>
           <div className="flex w-full gap-3 sm:w-auto">
@@ -582,7 +582,7 @@ const WhatsAppAdminPage: React.FC = () => {
                   isHeader
                   className="px-5 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
                 >
-                  Creado
+                  Agregado el
                 </TableCell>
                 <TableCell
                   isHeader
@@ -599,7 +599,7 @@ const WhatsAppAdminPage: React.FC = () => {
                     className="px-5 py-6 text-sm text-gray-500 dark:text-gray-400"
                     colSpan={3}
                   >
-                    Sin teléfonos excluidos.
+                    No hay números excluidos aún.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -639,17 +639,17 @@ const WhatsAppAdminPage: React.FC = () => {
         <div className="space-y-4">
           <div>
             <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
-              Escanea el QR
+              Vincular WhatsApp
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Vincula esta sesión desde WhatsApp Web en tu teléfono.
+              Abre WhatsApp en tu teléfono y escanea el código para conectarte.
             </p>
           </div>
 
           {qrData.qr ? (
             <div className="space-y-3">
               <div className="rounded-2xl bg-gray-950 p-3 text-center text-sm text-white/80">
-                Escanea este QR desde tu app de WhatsApp Web.
+                Ve a Dispositivos vinculados en tu WhatsApp y escanea el código.
               </div>
 
               <div className="rounded-3xl border border-gray-200 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800/40">
