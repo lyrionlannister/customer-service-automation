@@ -22,7 +22,7 @@ const WhatsappLinkDevice: React.FC<Props> = ({
   onFetchQr,
   onCloseSession,
 }) => (
-  <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
+  <section className="h-full rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
     <div className="flex items-center justify-between gap-4">
       <div>
         <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">

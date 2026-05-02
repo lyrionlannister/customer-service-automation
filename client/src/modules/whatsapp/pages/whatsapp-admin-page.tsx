@@ -50,7 +50,6 @@ const WhatsAppAdminPage: React.FC = () => {
     onStatusChange: setStatus,
     onQr: (data) => {
       setQrData(data);
-      openQrModal();
     },
     onReady: () => {
       setStatus("ready");
@@ -74,7 +73,7 @@ const WhatsAppAdminPage: React.FC = () => {
     <div className="mx-auto max-w-6xl space-y-6">
       <WhatsappHeader status={status} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <WhatsappAiReplies
           status={status}
           aiRepliesEnabled={aiRepliesEnabled}
