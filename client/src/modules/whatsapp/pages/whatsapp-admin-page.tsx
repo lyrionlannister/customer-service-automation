@@ -1,4 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useApiClient } from "@common/hooks/use-api-client";
+import Button from "@ui/button/button";
+import Input from "@ui/inputs/input";
+import Badge from "@ui/badge/badge";
 import { useWhatsappSession } from "../hooks/use-whatsapp-session";
 import { useWhatsappEvents } from "../hooks/use-whatsapp-events";
 import { useWhatsappSettings } from "../hooks/use-whatsapp-settings";
@@ -70,7 +74,7 @@ const WhatsAppAdminPage: React.FC = () => {
     <div className="mx-auto max-w-6xl space-y-6">
       <WhatsappHeader status={status} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid items-start gap-6 xl:grid-cols-2">
         <WhatsappAiReplies
           status={status}
           aiRepliesEnabled={aiRepliesEnabled}

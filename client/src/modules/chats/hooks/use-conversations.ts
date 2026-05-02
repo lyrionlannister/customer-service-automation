@@ -39,5 +39,19 @@ export function useConversations() {
     fetchConversations().catch(console.error);
   }, [fetchConversations]);
 
+  useEffect(() => {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
+    const eventSource = new EventSource(`${baseUrl}/whatsapp/events`);
+    const refresh = () => {
+      fetchConversations().catch(console.error);
+    };
+
+    eventSource.addEventListener("message_received", refresh);
+    eventSource.addEventListener("ready", refresh);
+    eventSource.addEventListener("disconnected", refresh);
+
+    return () => eventSource.close();
+  }, [fetchConversations]);
+
   return { conversations, loading, error, refetch: fetchConversations };
 }
