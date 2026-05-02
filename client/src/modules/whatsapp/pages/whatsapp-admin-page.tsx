@@ -43,6 +43,11 @@ type AutomationConfig = {
   source: "db" | "env";
 };
 
+type N8nIntegrationConfig = {
+  n8nEditorUrl: string;
+  source: "db" | "env";
+};
+
 const WhatsAppAdminPage: React.FC = () => {
   const { apiClient } = useApiClient();
   const { showToast } = useToast();
@@ -60,6 +65,10 @@ const WhatsAppAdminPage: React.FC = () => {
   const [automationSource, setAutomationSource] = useState<"db" | "env">("env");
   const [isSavingAutomation, setIsSavingAutomation] = useState(false);
   const [automationError, setAutomationError] = useState<string | null>(null);
+  const [n8nEditorUrl, setN8nEditorUrl] = useState("");
+  const [n8nEditorSource, setN8nEditorSource] = useState<"db" | "env">("env");
+  const [isSavingN8nEditorUrl, setIsSavingN8nEditorUrl] = useState(false);
+  const [n8nEditorError, setN8nEditorError] = useState<string | null>(null);
   const [isClosingWhatsappSession, setIsClosingWhatsappSession] =
     useState(false);
 
@@ -123,6 +132,74 @@ const WhatsAppAdminPage: React.FC = () => {
     const payload = (await response.json()) as AutomationConfig;
     setAutomationUrl(payload.automationUrl);
     setAutomationSource(payload.source);
+  };
+
+  const getN8nEditorUrlValidationError = (rawValue: string): string | null => {
+    const value = rawValue.trim();
+    if (!value) return "La URL del editor de n8n es obligatoria.";
+
+    try {
+      const parsed = new URL(value);
+      const isProd = import.meta.env.PROD;
+      if (isProd && parsed.protocol !== "https:") {
+        return "En producción, la URL del editor debe usar HTTPS.";
+      }
+
+      if (!isProd && parsed.protocol === "http:") {
+        const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname);
+        if (!isLocalhost) {
+          return "En desarrollo, HTTP solo se permite para localhost.";
+        }
+      }
+
+      if (!["http:", "https:"].includes(parsed.protocol)) {
+        return "La URL del editor debe usar HTTP o HTTPS.";
+      }
+
+      return null;
+    } catch {
+      return "La URL del editor debe ser una URL absoluta válida.";
+    }
+  };
+
+  const fetchN8nEditorConfig = async (): Promise<void> => {
+    const response = await apiClient("/integrations/n8n");
+    if (!response.ok) return;
+
+    const payload = (await response.json()) as N8nIntegrationConfig;
+    setN8nEditorUrl(payload.n8nEditorUrl);
+    setN8nEditorSource(payload.source);
+  };
+
+  const saveN8nEditorUrl = async (): Promise<void> => {
+    const validationError = getN8nEditorUrlValidationError(n8nEditorUrl);
+    if (validationError) {
+      setN8nEditorError(validationError);
+      return;
+    }
+
+    try {
+      setIsSavingN8nEditorUrl(true);
+      setN8nEditorError(null);
+
+      const response = await apiClient("/integrations/n8n", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ n8nEditorUrl: n8nEditorUrl.trim() }),
+      });
+
+      if (!response.ok) {
+        const message = await parseErrorMessage(response, "No se pudo guardar la URL del editor");
+        setN8nEditorError(message);
+        return;
+      }
+
+      const payload = (await response.json()) as N8nIntegrationConfig;
+      setN8nEditorUrl(payload.n8nEditorUrl);
+      setN8nEditorSource(payload.source);
+    } finally {
+      setIsSavingN8nEditorUrl(false);
+    }
   };
 
   const saveAutomationUrl = async (): Promise<void> => {
@@ -341,6 +418,7 @@ const WhatsAppAdminPage: React.FC = () => {
       await fetchExclusions();
       await fetchSettings();
       await fetchAutomationConfig();
+      await fetchN8nEditorConfig();
     };
 
     load().catch((error) =>
@@ -542,6 +620,40 @@ const WhatsAppAdminPage: React.FC = () => {
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
             {automationError}
           </p>
+        ) : null}
+      </section>
+
+      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">Editor de n8n</p>
+          </div>
+          <Badge color={n8nEditorSource === "db" ? "success" : "secondary"} size="sm">
+            {n8nEditorSource === "db" ? "Personalizada" : "Por defecto"}
+          </Badge>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-[1.8fr_0.8fr_0.8fr]">
+          <Input
+            placeholder="https://mi-n8n.example.com"
+            value={n8nEditorUrl}
+            onChange={(event) => setN8nEditorUrl(event.target.value)}
+            className="w-full"
+          />
+          <Button onClick={saveN8nEditorUrl} disabled={!!getN8nEditorUrlValidationError(n8nEditorUrl) || isSavingN8nEditorUrl}>
+            {isSavingN8nEditorUrl ? "Guardando..." : "Guardar"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => window.open(n8nEditorUrl, "_blank", "noopener,noreferrer")}
+            disabled={!!getN8nEditorUrlValidationError(n8nEditorUrl)}
+          >
+            Abrir n8n
+          </Button>
+        </div>
+
+        {n8nEditorError ? (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{n8nEditorError}</p>
         ) : null}
       </section>
 
