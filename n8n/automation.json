@@ -10,8 +10,8 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [-736, -208],
-      "id": "9a701f8b-f1d3-4d06-8dd4-18d6e85fd737",
+      "position": [-3712, 304],
+      "id": "92f1cdd8-e7dd-451f-8c42-d73230233656",
       "name": "Webhook",
       "webhookId": "97c71c06-20b2-4c12-a8be-16442536f909"
     },
@@ -21,8 +21,8 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-512, -208],
-      "id": "14789703-322b-45ac-b660-e945e50b5acf",
+      "position": [-3488, 304],
+      "id": "ed8b196c-ff22-4ef2-9f78-680e8b06ed54",
       "name": "Preparar Mensaje"
     },
     {
@@ -33,12 +33,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [-288, -208],
-      "id": "6b3eb9ec-dda0-4287-aae1-a6b23247041b",
+      "position": [-3264, 304],
+      "id": "b5f677fc-d369-42db-b93b-2cd9f28d2ece",
       "name": "Buffer Redis",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -54,13 +54,13 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [-64, -208],
-      "id": "b2227d43-fc80-4c7c-8cb8-6b913e7a1ecd",
+      "position": [-3040, 304],
+      "id": "970e3e78-1990-4665-9c9b-a084612b9656",
       "name": "Actualizar Ultimo Mensaje",
       "alwaysOutputData": true,
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -74,12 +74,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [160, -208],
-      "id": "94933fda-211b-400a-9739-e058b526e9e7",
+      "position": [-2816, 304],
+      "id": "066a59bd-ea0e-4d81-9d7f-bc442ae21d3b",
       "name": "Leer Espera Activa",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -111,8 +111,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [384, -208],
-      "id": "60298f83-0021-45a1-bb87-47e63b78147f",
+      "position": [-2592, 304],
+      "id": "79d99952-c9bd-41c3-afb8-6f8e5a9ed35a",
       "name": "Ya Hay Respuesta En Espera?"
     },
     {
@@ -123,8 +123,8 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [608, -304],
-      "id": "268de56e-9ac5-49ad-8839-9ac177fd8719",
+      "position": [-2368, 208],
+      "id": "0471cfe5-4fd7-4e13-9011-4081ff91f13d",
       "name": "Responder Sin Mensaje"
     },
     {
@@ -137,12 +137,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [608, -112],
-      "id": "daf345b9-98cf-420a-b35d-35fb408b89e3",
+      "position": [-2368, 400],
+      "id": "9a7bf483-5a7d-4f29-9e3c-51931eac4252",
       "name": "Marcar Espera Activa",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -153,8 +153,8 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [832, -112],
-      "id": "77417729-b728-48e0-ae5e-150ea7e4a651",
+      "position": [-2144, 400],
+      "id": "2d67bb47-d0f8-4b30-bc58-3b91cf69e44c",
       "name": "Esperar Buffer",
       "webhookId": "bce3df94-a5d9-4cd5-85db-27e31ef71f43"
     },
@@ -167,12 +167,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [1056, -112],
-      "id": "fe8eddca-4d4d-422d-bc08-1121c1cd3b89",
+      "position": [-1920, 400],
+      "id": "507458db-d769-4b64-8597-6f688ea1b3c6",
       "name": "Leer Buffer",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -183,8 +183,8 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1280, -112],
-      "id": "528ae104-fe4a-45e0-b4a4-2095751b7383",
+      "position": [-1696, 400],
+      "id": "5e61bd61-7dfc-41d7-b9fa-49f3104f05ca",
       "name": "Consolidar Buffer"
     },
     {
@@ -194,12 +194,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [1504, -112],
-      "id": "684ddcfd-aba2-4264-8860-cd6f794e7875",
+      "position": [-1472, 400],
+      "id": "1c7624dd-c9af-47b6-9882-b9c9e18b4bbc",
       "name": "Limpiar Buffer",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -211,12 +211,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [1728, -112],
-      "id": "b8508640-39e6-4961-b6b4-1aca90c43842",
+      "position": [-1248, 400],
+      "id": "37b9238e-2b6d-4b11-843a-28bd2f30a498",
       "name": "Limpiar Espera",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -247,8 +247,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1952, -288],
-      "id": "8ea9eb8a-665e-44af-a5fa-9298d8c764d0",
+      "position": [-1024, 224],
+      "id": "03150a24-86bd-4ce3-8e70-aa32e5efbafd",
       "name": "Mensaje Solo Saludo?"
     },
     {
@@ -260,12 +260,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [2176, -112],
-      "id": "49e2627c-a513-45a7-99b9-32053d201f70",
+      "position": [-800, 400],
+      "id": "93e0e85e-59bc-4471-8f79-1042549b73b4",
       "name": "Leer Ruta Actual",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -280,8 +280,8 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [2400, -112],
-      "id": "6a0d0369-786e-4275-92d1-2cd5ec9f19b3",
+      "position": [-576, 400],
+      "id": "400650e2-0f24-4738-a4e5-a1d952ed94a2",
       "name": "Intent Classifier"
     },
     {
@@ -310,8 +310,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2752, -312],
-      "id": "f44fb8a6-dd33-4d37-a6f0-aaf4ff8676ec",
+      "position": [-224, 208],
+      "id": "483b5012-f0e8-4426-80a3-c8afd066289a",
       "name": "Es saludo?"
     },
     {
@@ -322,8 +322,8 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [2976, -512],
-      "id": "f6d1db19-4a24-4d1e-a3da-9a72691b411d",
+      "position": [0, 0],
+      "id": "29f302f6-08c8-48eb-956e-88413b5158af",
       "name": "Responder Bienvenida"
     },
     {
@@ -352,8 +352,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2752, -112],
-      "id": "ca7f5c41-97be-4dad-bc79-39a70072fd56",
+      "position": [-112, 416],
+      "id": "4382f604-ac44-4810-af29-a6ed0c9b5cee",
       "name": "Es garantia?"
     },
     {
@@ -382,8 +382,8 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2976, 88],
-      "id": "1eef99ef-53b5-4968-b62e-92c27aa77bc3",
+      "position": [0, 608],
+      "id": "f572b795-d36e-4691-adcf-1abd46a95e1e",
       "name": "Es reparacion?"
     },
     {
@@ -394,8 +394,8 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3200, 288],
-      "id": "7c28bd14-f897-47a6-80f6-18edcf539df3",
+      "position": [224, 800],
+      "id": "4fcc3043-a395-4b4f-aa91-6f9dd25620ab",
       "name": "Responder Aclaracion"
     },
     {
@@ -408,12 +408,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [2976, -312],
-      "id": "12ef9e5d-8316-44ea-a8f6-8abb7b68235a",
+      "position": [0, 208],
+      "id": "0da05bbf-5fcb-43ea-99cd-a61b08872d42",
       "name": "Guardar Ruta Garantia",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -428,12 +428,12 @@
       },
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
-      "position": [3200, 88],
-      "id": "bc64d789-2102-4ade-b788-abae5a96b3bc",
+      "position": [224, 592],
+      "id": "075efe46-0415-41af-883a-cee8f3751f44",
       "name": "Guardar Ruta Reparacion",
       "credentials": {
         "redis": {
-          "id": "ObX0hQ1tvrTibXOr",
+          "id": "2jWHNW8ae8gTPHI6",
           "name": "Redis account"
         }
       }
@@ -448,8 +448,8 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [3200, -416],
-      "id": "dd494437-c738-4afa-b5fc-ce9a52bb59a3",
+      "position": [224, 96],
+      "id": "c61d2041-64dd-4af2-a36a-71bd78ff356a",
       "name": "Agente Garantia"
     },
     {
@@ -462,8 +462,8 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [3424, 88],
-      "id": "b9c28759-afa6-4cf0-a668-e8bd508443d1",
+      "position": [448, 592],
+      "id": "892cf110-bd2a-4d48-96fb-6001d83b3523",
       "name": "Agente Reparacion"
     },
     {
@@ -474,8 +474,8 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3776, -112],
-      "id": "866abf52-9033-48d5-a4c2-e572ab85177d",
+      "position": [800, 400],
+      "id": "46cd4898-43d3-4a99-a987-2626a8fa1354",
       "name": "Respond to Webhook"
     },
     {
@@ -490,12 +490,12 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [2400, 112],
-      "id": "d5318e50-4fc9-498e-9587-ce963868c402",
+      "position": [-576, 624],
+      "id": "df7c0614-50d7-42c5-a8ad-aa8fd1b38049",
       "name": "Modelo Clasificador",
       "credentials": {
         "openAiApi": {
-          "id": "RtacINYxEmPSnfES",
+          "id": "ZllqGQz4PDdr39A6",
           "name": "OpenAI account"
         }
       }
@@ -512,12 +512,12 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [3208, -192],
-      "id": "a2f5fb9d-b95d-4f36-a552-f4138ea220e3",
+      "position": [224, 320],
+      "id": "cb3af28b-d387-4977-99cb-c68484777bd7",
       "name": "Modelo Garantia",
       "credentials": {
         "openAiApi": {
-          "id": "RtacINYxEmPSnfES",
+          "id": "ZllqGQz4PDdr39A6",
           "name": "OpenAI account"
         }
       }
@@ -534,12 +534,12 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
-      "position": [3496, 312],
-      "id": "bd757e14-39cb-49dd-835f-378a02e89988",
+      "position": [448, 800],
+      "id": "77e280f8-aa87-445d-8e77-838136609666",
       "name": "Modelo Reparacion",
       "credentials": {
         "openAiApi": {
-          "id": "RtacINYxEmPSnfES",
+          "id": "ZllqGQz4PDdr39A6",
           "name": "OpenAI account"
         }
       }
@@ -551,12 +551,68 @@
       },
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
-      "position": [3336, -192],
-      "id": "df3bf26f-ce0d-466b-aefd-96e1fb3536b7",
+      "position": [368, 320],
+      "id": "deb56c94-cbda-4849-b500-0466a0215f40",
       "name": "Postgres Chat Memory",
       "credentials": {
         "postgres": {
-          "id": "zdN4ibQRK92EFTtY",
+          "id": "ewmdvnBQLj4BH1ty",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const context_id = $('Consolidar Buffer').item.json.context_id;\nconst message = $('Consolidar Buffer').item.json.message || '';\n\nfunction sqlEscape(str) {\n  return String(str).replace(/'/g, \"''\");\n}\n\nconst humanMsg = JSON.stringify({\n  type: 'human',\n  content: message,\n  additional_kwargs: {},\n  response_metadata: {}\n});\n\nconst aiMsg = JSON.stringify({\n  type: 'ai',\n  content: 'Bienvenido, ¿en que puedo ayudarte el dia de hoy?',\n  additional_kwargs: {},\n  response_metadata: {},\n  tool_calls: [],\n  invalid_tool_calls: []\n});\n\nreturn [{\n  json: {\n    query: `INSERT INTO n8n_chat_histories (session_id, message) VALUES ('${sqlEscape(context_id)}', '${sqlEscape(humanMsg)}'::jsonb), ('${sqlEscape(context_id)}', '${sqlEscape(aiMsg)}'::jsonb)`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, 0],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Preparar Memoria Bienvenida"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [448, 0],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Guardar Memoria Bienvenida",
+      "credentials": {
+        "postgres": {
+          "id": "ewmdvnBQLj4BH1ty",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const context_id = $('Consolidar Buffer').item.json.context_id;\nconst message = $('Consolidar Buffer').item.json.message || '';\n\nfunction sqlEscape(str) {\n  return String(str).replace(/'/g, \"''\");\n}\n\nconst humanMsg = JSON.stringify({\n  type: 'human',\n  content: message,\n  additional_kwargs: {},\n  response_metadata: {}\n});\n\nconst aiMsg = JSON.stringify({\n  type: 'ai',\n  content: 'Claro, para ayudarte mejor, ¿me escribes por una reparacion nueva o por una garantia de una reparacion anterior?',\n  additional_kwargs: {},\n  response_metadata: {},\n  tool_calls: [],\n  invalid_tool_calls: []\n});\n\nreturn [{\n  json: {\n    query: `INSERT INTO n8n_chat_histories (session_id, message) VALUES ('${sqlEscape(context_id)}', '${sqlEscape(humanMsg)}'::jsonb), ('${sqlEscape(context_id)}', '${sqlEscape(aiMsg)}'::jsonb)`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [448, 800],
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Preparar Memoria Aclaracion"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [672, 800],
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "name": "Guardar Memoria Aclaracion",
+      "credentials": {
+        "postgres": {
+          "id": "ewmdvnBQLj4BH1ty",
           "name": "Postgres account"
         }
       }
@@ -889,6 +945,50 @@
           }
         ]
       ]
+    },
+    "Responder Bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Preparar Memoria Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Memoria Bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Guardar Memoria Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder Aclaracion": {
+      "main": [
+        [
+          {
+            "node": "Preparar Memoria Aclaracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Memoria Aclaracion": {
+      "main": [
+        [
+          {
+            "node": "Guardar Memoria Aclaracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -896,11 +996,11 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "2c4a3a52-cc71-4f59-a248-855b45d7ebb7",
+  "versionId": "dcbab3c1-7f3f-45b3-be16-60c04bb33d05",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "4aec0996fda5126066b771affed9118546abdea111a97eeb2bf3310467487606"
+    "instanceId": "ec8dc788b88f9933fefd6cec3b35e811760de1195ec5f4ce2c859c7d5a072fb5"
   },
-  "id": "tgn5XDhSLMWTvREv",
+  "id": "2KlDdPYVLPRSrUV3",
   "tags": []
 }

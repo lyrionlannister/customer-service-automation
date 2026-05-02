@@ -1,47 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
-import { useApiClient } from "../../common/hooks/use-api-client";
-import useToast from "../../common/hooks/use-toast";
-import { useModal } from "../../common/hooks/use-modal";
-import Button from "@/modules/common/components/ui/button/button";
-import Input from "@/modules/common/components/ui/inputs/input";
-import Badge from "@/modules/common/components/ui/badge/badge";
-import Modal from "@/modules/common/components/ui/modal/modal";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@/modules/common/components/ui/table/table";
-
-type WhatsappStatus = "connecting" | "qr_required" | "ready" | "disconnected";
-
-const statusStyles: Record<WhatsappStatus, { label: string; color: string }> = {
-  connecting: { label: "Conectando", color: "secondary" },
-  qr_required: { label: "Requiere vinculación", color: "warning" },
-  ready: { label: "Conectado", color: "success" },
-  disconnected: { label: "Desconectado", color: "danger" },
-};
-
-type QrResponse = {
-  qr: string | null;
-  expiresAt?: string;
-};
-
-type ExcludedPhone = {
-  phone: string;
-  createdAt: string;
-};
-
-type WhatsappSettings = {
-  aiRepliesEnabled: boolean;
-};
-
-type AutomationConfig = {
-  automationUrl: string;
-  source: "db" | "env";
-};
+import { useMemo } from "react";
+import { useWhatsappSession } from "../hooks/use-whatsapp-session";
+import { useWhatsappEvents } from "../hooks/use-whatsapp-events";
+import { useWhatsappSettings } from "../hooks/use-whatsapp-settings";
+import { useAutomationConfig } from "../hooks/use-automation-config";
+import { useExcludedPhones } from "../hooks/use-excluded-phones";
+import WhatsappHeader from "../components/whatsapp-header";
+import WhatsappAiReplies from "../components/whatsapp-ai-replies";
+import WhatsappLinkDevice from "../components/whatsapp-link-device";
+import WhatsappAutomation from "../components/whatsapp-automation";
+import WhatsappExcludedPhones from "../components/whatsapp-excluded-phones";
+import WhatsappQrModal from "../components/whatsapp-qr-modal";
 
 type N8nIntegrationConfig = {
   n8nEditorUrl: string;
@@ -449,138 +417,81 @@ const WhatsAppAdminPage: React.FC = () => {
     });
 
     eventSource.addEventListener("ready", () => {
+  const {
+    status,
+    setStatus,
+    qrData,
+    setQrData,
+    isQrModalOpen,
+    openQrModal,
+    closeQrModal,
+    isLoadingQr,
+    qrError,
+    isClosingSession,
+    fetchQr,
+    closeSession,
+  } = useWhatsappSession();
+
+  const { aiRepliesEnabled, setAiRepliesEnabled, isSavingSettings, toggleAiReplies } =
+    useWhatsappSettings();
+
+  const {
+    automationUrl,
+    setAutomationUrl,
+    automationSource,
+    isSavingAutomation,
+    automationError,
+    saveAutomationUrl,
+  } = useAutomationConfig();
+
+  const { exclusions, newPhone, setNewPhone, createExclusion, deleteExclusion } =
+    useExcludedPhones();
+
+  useWhatsappEvents({
+    onStatusChange: setStatus,
+    onQr: (data) => {
+      setQrData(data);
+      openQrModal();
+    },
+    onReady: () => {
       setStatus("ready");
       setQrData({ qr: null });
       closeQrModal();
-    });
-
-    eventSource.addEventListener("disconnected", () => {
+    },
+    onDisconnected: () => {
       setStatus("disconnected");
       setQrData({ qr: null });
       closeQrModal();
-    });
+    },
+    onAiRepliesSetting: (s) => setAiRepliesEnabled(s.aiRepliesEnabled),
+  });
 
-    eventSource.addEventListener("ai_replies_setting", (event) => {
-      const payload = JSON.parse(event.data) as WhatsappSettings;
-      if (typeof payload.aiRepliesEnabled === "boolean") {
-        setAiRepliesEnabled(payload.aiRepliesEnabled);
-      }
-    });
-
-    return () => {
-      eventSource.close();
-    };
-  }, [apiClient, closeQrModal, openQrModal]);
+  const formattedExpiration = useMemo(() => {
+    if (!qrData.expiresAt) return null;
+    return new Date(qrData.expiresAt).toLocaleString();
+  }, [qrData.expiresAt]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">
-              WhatsApp
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Controla la conexión, las respuestas automáticas y los contactos excluidos.
-            </p>
-          </div>
-          <Badge color={statusStyles[status].color} variant="solid" size="lg">
-            {statusStyles[status].label}
-          </Badge>
-        </div>
-      </div>
+      <WhatsappHeader status={status} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
-                Respuestas automáticas
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Activa o desactiva las respuestas automáticas con inteligencia artificial.
-              </p>
-            </div>
-            <Button
-              variant={aiRepliesEnabled ? "success" : "secondary"}
-              size="md"
-              onClick={() => updateAiRepliesEnabled(!aiRepliesEnabled)}
-              disabled={isSavingSettings}
-            >
-              {aiRepliesEnabled ? "Desactivar respuestas" : "Activar respuestas"}
-            </Button>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Respuestas automáticas
-              </p>
-              <p className="mt-2 text-xl font-semibold">
-                {aiRepliesEnabled ? "Activadas" : "Desactivadas"}
-              </p>
-            </div>
-            <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Estado de conexión
-              </p>
-              <p className="mt-2 text-xl font-semibold">
-                {statusStyles[status].label}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
-                Vincular dispositivo
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Escanea el código con tu teléfono para conectar WhatsApp.
-              </p>
-            </div>
-            {status === "ready" ? (
-              <Button
-                variant="danger"
-                size="md"
-                className="min-w-40"
-                onClick={closeWhatsappSession}
-                disabled={isClosingWhatsappSession}
-              >
-                {isClosingWhatsappSession ? "Desconectando..." : "Desconectar dispositivo"}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="md"
-                className="min-w-35"
-                onClick={fetchQr}
-                disabled={isLoadingQr}
-              >
-                {isLoadingQr ? "Generando..." : "Generar código QR"}
-              </Button>
-            )}
-          </div>
-
-          {qrError ? (
-            <div className="mt-4 rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-              {qrError}
-            </div>
-          ) : null}
-
-          <p className="pt-4 text-sm text-gray-500 dark:text-gray-400">
-            {qrData.qr
-              ? "Código listo. Ábrelo para escanearlo con tu teléfono."
-              : "No hay código disponible. Genera uno para vincular tu dispositivo."}
-          </p>
-          {formattedExpiration ? (
-            <p className="pt-1 text-sm text-gray-500 dark:text-gray-400">
-              Expira el {formattedExpiration}
-            </p>
-          ) : null}
-        </section>
+        <WhatsappAiReplies
+          status={status}
+          aiRepliesEnabled={aiRepliesEnabled}
+          isSavingSettings={isSavingSettings}
+          onToggle={toggleAiReplies}
+        />
+        <WhatsappLinkDevice
+          status={status}
+          qrData={qrData}
+          isLoadingQr={isLoadingQr}
+          isClosingSession={isClosingSession}
+          qrError={qrError}
+          formattedExpiration={formattedExpiration}
+          onFetchQr={fetchQr}
+          onCloseSession={closeSession}
+        />
       </div>
 
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
@@ -745,46 +656,29 @@ const WhatsAppAdminPage: React.FC = () => {
 
       <Modal
         isOpen={isQrModalOpen && Boolean(qrData.qr)}
+      <WhatsappAutomation
+        automationUrl={automationUrl}
+        automationSource={automationSource}
+        isSavingAutomation={isSavingAutomation}
+        automationError={automationError}
+        onUrlChange={setAutomationUrl}
+        onSave={saveAutomationUrl}
+      />
+
+      <WhatsappExcludedPhones
+        exclusions={exclusions}
+        newPhone={newPhone}
+        onNewPhoneChange={setNewPhone}
+        onCreateExclusion={createExclusion}
+        onDeleteExclusion={deleteExclusion}
+      />
+
+      <WhatsappQrModal
+        isOpen={isQrModalOpen}
+        qrData={qrData}
+        formattedExpiration={formattedExpiration}
         onClose={closeQrModal}
-        className="mx-4 max-w-120 p-6"
-      >
-        <div className="space-y-4">
-          <div>
-            <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
-              Vincular WhatsApp
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Abre WhatsApp en tu teléfono y escanea el código para conectarte.
-            </p>
-          </div>
-
-          {qrData.qr ? (
-            <div className="space-y-3">
-              <div className="rounded-2xl bg-gray-950 p-3 text-center text-sm text-white/80">
-                Ve a Dispositivos vinculados en tu WhatsApp y escanea el código.
-              </div>
-
-              <div className="rounded-3xl border border-gray-200 bg-gray-50 p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800/40">
-                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_8px_24px_-12px_rgba(16,24,40,0.35)] dark:border-gray-600">
-                  <div className="flex justify-center rounded-xl border border-gray-100 bg-white p-2">
-                    <QRCodeSVG value={qrData.qr} size={320} />
-                  </div>
-                </div>
-              </div>
-
-              {formattedExpiration ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Expira el {formattedExpiration}
-                </p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No hay QR disponible en este momento.
-            </p>
-          )}
-        </div>
-      </Modal>
+      />
     </div>
   );
 };
