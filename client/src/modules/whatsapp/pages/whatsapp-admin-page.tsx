@@ -34,8 +34,12 @@ const WhatsAppAdminPage: React.FC = () => {
     closeSession,
   } = useWhatsappSession();
 
-  const { setAiRepliesEnabled, aiRepliesEnabled, isSavingSettings, toggleAiReplies } =
-    useWhatsappSettings();
+  const {
+    setAiRepliesEnabled,
+    aiRepliesEnabled,
+    isSavingSettings,
+    toggleAiReplies,
+  } = useWhatsappSettings();
 
   const {
     automationUrl,
@@ -51,8 +55,13 @@ const WhatsAppAdminPage: React.FC = () => {
   const [isSavingN8nEditorUrl, setIsSavingN8nEditorUrl] = useState(false);
   const [n8nEditorError, setN8nEditorError] = useState<string | null>(null);
 
-  const { exclusions, newPhone, setNewPhone, createExclusion, deleteExclusion } =
-    useExcludedPhones();
+  const {
+    exclusions,
+    newPhone,
+    setNewPhone,
+    createExclusion,
+    deleteExclusion,
+  } = useExcludedPhones();
 
   useWhatsappEvents({
     onStatusChange: setStatus,
@@ -98,7 +107,9 @@ const WhatsAppAdminPage: React.FC = () => {
       }
 
       if (!isProd && parsed.protocol === "http:") {
-        const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname);
+        const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(
+          parsed.hostname,
+        );
         if (!isLocalhost) {
           return "En desarrollo, HTTP solo se permite para localhost.";
         }
@@ -133,7 +144,9 @@ const WhatsAppAdminPage: React.FC = () => {
 
       if (!response.ok) {
         const payload = (await response.json()) as { error?: string };
-        setN8nEditorError(payload.error ?? "No se pudo guardar la URL del editor");
+        setN8nEditorError(
+          payload.error ?? "No se pudo guardar la URL del editor",
+        );
         return;
       }
 
@@ -154,7 +167,7 @@ const WhatsAppAdminPage: React.FC = () => {
     <div className="mx-auto max-w-6xl space-y-6">
       <WhatsappHeader status={status} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid items-start gap-6 xl:grid-cols-2">
         <WhatsappAiReplies
           status={status}
           aiRepliesEnabled={aiRepliesEnabled}
@@ -185,9 +198,14 @@ const WhatsAppAdminPage: React.FC = () => {
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">Editor de n8n</p>
+            <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">
+              Editor de n8n
+            </p>
           </div>
-          <Badge color={n8nEditorSource === "db" ? "success" : "secondary"} size="sm">
+          <Badge
+            color={n8nEditorSource === "db" ? "success" : "secondary"}
+            size="sm"
+          >
             {n8nEditorSource === "db" ? "Personalizada" : "Por defecto"}
           </Badge>
         </div>
@@ -199,12 +217,20 @@ const WhatsAppAdminPage: React.FC = () => {
             onChange={(event) => setN8nEditorUrl(event.target.value)}
             className="w-full"
           />
-          <Button onClick={saveN8nEditorUrl} disabled={!!getN8nEditorUrlValidationError(n8nEditorUrl) || isSavingN8nEditorUrl}>
+          <Button
+            onClick={saveN8nEditorUrl}
+            disabled={
+              !!getN8nEditorUrlValidationError(n8nEditorUrl) ||
+              isSavingN8nEditorUrl
+            }
+          >
             {isSavingN8nEditorUrl ? "Guardando..." : "Guardar"}
           </Button>
           <Button
             variant="secondary"
-            onClick={() => window.open(n8nEditorUrl, "_blank", "noopener,noreferrer")}
+            onClick={() =>
+              window.open(n8nEditorUrl, "_blank", "noopener,noreferrer")
+            }
             disabled={!!getN8nEditorUrlValidationError(n8nEditorUrl)}
           >
             Abrir n8n
@@ -212,7 +238,9 @@ const WhatsAppAdminPage: React.FC = () => {
         </div>
 
         {n8nEditorError ? (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{n8nEditorError}</p>
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+            {n8nEditorError}
+          </p>
         ) : null}
       </section>
 
