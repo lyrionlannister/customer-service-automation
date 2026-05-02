@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { CHATS_ERROR_MESSAGES } from "../constants/chats.constants.js";
 import { ChatsService } from "../services/chats.service.js";
 
 export class ChatsController {
@@ -10,7 +11,7 @@ export class ChatsController {
       res.status(200).json(conversations);
     } catch (error) {
       console.error("Error listando conversaciones", error);
-      res.status(500).json({ error: "Error al obtener las conversaciones" });
+      res.status(500).json({ error: CHATS_ERROR_MESSAGES.CONVERSATIONS_LIST });
     }
   }
 
@@ -20,14 +21,14 @@ export class ChatsController {
         ? req.params.sessionId[0]
         : req.params.sessionId;
       if (!sessionId) {
-        res.status(400).json({ error: "sessionId es requerido" });
+        res.status(400).json({ error: CHATS_ERROR_MESSAGES.SESSION_ID_REQUIRED });
         return;
       }
       const messages = await this.chatsService.getMessages(sessionId);
       res.status(200).json(messages);
     } catch (error) {
       console.error("Error obteniendo mensajes", error);
-      res.status(500).json({ error: "Error al obtener los mensajes" });
+      res.status(500).json({ error: CHATS_ERROR_MESSAGES.MESSAGES_LIST });
     }
   }
 
@@ -37,7 +38,7 @@ export class ChatsController {
       res.status(200).json(counts);
     } catch (error) {
       console.error("Error obteniendo conteo diario", error);
-      res.status(500).json({ error: "Error al obtener el conteo diario" });
+      res.status(500).json({ error: CHATS_ERROR_MESSAGES.DAILY_COUNT });
     }
   }
 
@@ -48,7 +49,7 @@ export class ChatsController {
       res.status(200).json(counts);
     } catch (error) {
       console.error("Error obteniendo conteo mensual", error);
-      res.status(500).json({ error: "Error al obtener el conteo mensual" });
+      res.status(500).json({ error: CHATS_ERROR_MESSAGES.MONTHLY_COUNT });
     }
   }
 }
