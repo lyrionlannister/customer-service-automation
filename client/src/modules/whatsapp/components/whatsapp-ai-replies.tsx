@@ -15,7 +15,7 @@ const WhatsappAiReplies: React.FC<Props> = ({
   isSavingSettings,
   onToggle,
 }) => (
-  <section className="space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
+  <section className="h-full space-y-5 rounded-3xl border border-gray-200 bg-white p-6 shadow-soft dark:border-gray-700 dark:bg-gray-950">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-lg font-semibold text-brand-600 dark:text-brand-400">

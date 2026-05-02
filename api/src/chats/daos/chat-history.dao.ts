@@ -10,6 +10,11 @@ export interface ConversationRow {
   lastType: string;
 }
 
+export interface ConversationCountPoint {
+  bucket: string;
+  count: number;
+}
+
 export class ChatHistoryDao extends BaseDao<ChatHistory> {
   constructor(repository: Repository<ChatHistory>) {
     super(repository);
@@ -34,5 +39,27 @@ export class ChatHistoryDao extends BaseDao<ChatHistory> {
       where: { sessionId } as any,
       order: { id: "ASC" } as any,
     });
+  }
+
+  async getConversationCountsByDay(): Promise<ConversationCountPoint[]> {
+    return this.repository.query(`
+      SELECT TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS bucket, COUNT(*)::int AS count
+      FROM n8n_chat_histories
+      GROUP BY DATE_TRUNC('day', created_at)
+      ORDER BY DATE_TRUNC('day', created_at) ASC
+    `);
+  }
+
+  async getConversationCountsByMonth(year: number): Promise<ConversationCountPoint[]> {
+    return this.repository.query(
+      `
+      SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS bucket, COUNT(*)::int AS count
+      FROM n8n_chat_histories
+      WHERE EXTRACT(YEAR FROM created_at) = $1
+      GROUP BY DATE_TRUNC('month', created_at)
+      ORDER BY DATE_TRUNC('month', created_at) ASC
+    `,
+      [year],
+    );
   }
 }

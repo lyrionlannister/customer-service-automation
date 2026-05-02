@@ -7,6 +7,8 @@ coverage/
 *.tmp
 *.bak
 
+.claude/
+CLAUDE.md
 
 # Logs
 logs
@@ -36,3 +38,6 @@ dist-ssr
 pnpm-lock.yaml
 .env.production
 .env.development
+temp_auto_push.bat
+temp_interactive_push.bat
+branch_structure.json
