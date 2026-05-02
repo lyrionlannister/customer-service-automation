@@ -1,5 +1,9 @@
 import { Repository } from "typeorm";
-import { ChatHistoryDao, ConversationRow } from "../daos/chat-history.dao.js";
+import {
+  ChatHistoryDao,
+  ConversationCountPoint,
+  ConversationRow,
+} from "../daos/chat-history.dao.js";
 import { ContactName } from "../entities/contact-name.entity.js";
 
 export interface ConversationDto {
@@ -58,5 +62,13 @@ export class ChatsService {
       type: entry.message.type,
       fromMe: entry.message.type === "ai",
     }));
+  }
+
+  async getConversationCountsByDay(): Promise<ConversationCountPoint[]> {
+    return this.chatHistoryDao.getConversationCountsByDay();
+  }
+
+  async getConversationCountsByMonth(year: number): Promise<ConversationCountPoint[]> {
+    return this.chatHistoryDao.getConversationCountsByMonth(year);
   }
 }

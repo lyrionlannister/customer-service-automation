@@ -3,6 +3,7 @@ import ChatsPage from "./modules/chats/pages/chats-page";
 import AuthPage from "./modules/auth/pages/auth-page";
 import RegisterPage from "./modules/auth/pages/register-page";
 import NotFound from "./modules/common/pages/not-found";
+import DashboardPage from "./modules/chats/pages/dashboard-page";
 
 export const publicRoutes = [
   {
@@ -20,6 +21,10 @@ export const publicRoutes = [
 ];
 
 export const protectedRoutes = [
+  {
+    path: "/admin",
+    element: <DashboardPage />,
+  },
   {
     path: "/admin/whatsapp",
     element: <WhatsAppAdminPage />,
