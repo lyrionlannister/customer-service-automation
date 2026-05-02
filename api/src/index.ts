@@ -12,6 +12,7 @@ import { createAuthRouter } from "./auth/routes/auth.routes.js";
 import { createWhatsappAdminRouter } from "./whatsapp-admin/whatsapp-admin.routes.js";
 import { ExcludedPhone } from "./whatsapp-admin/entities/excluded-phone.entity.js";
 import { createAutomationAdminRouter } from "./automation/automation-admin.routes.js";
+import { createN8nIntegrationRouter } from "./integrations/n8n-admin.routes.js";
 import { ChatHistory } from "./chats/entities/chat-history.entity.js";
 import { ContactName } from "./chats/entities/contact-name.entity.js";
 import { ChatHistoryDao } from "./chats/daos/chat-history.dao.js";
@@ -54,6 +55,7 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     app.use("/api/v1/auth", createAuthRouter(authController));
     app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
     app.use("/api/v1/automation", createAutomationAdminRouter());
+    app.use("/api/v1/integrations/n8n", createN8nIntegrationRouter());
     app.use("/api/v1/chats", createChatsRouter(chatsController));
 
     app.get("/", (_req, res) => {

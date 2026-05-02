@@ -10,4 +10,7 @@ export class WhatsappSettings {
 
   @Column({ type: "text", nullable: true })
   automationUrl!: string | null;
+
+  @Column({ type: "text", nullable: true })
+  n8nEditorUrl!: string | null;
 }

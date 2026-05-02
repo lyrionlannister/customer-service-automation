@@ -39,6 +39,7 @@ export class SettingsService {
       id: SettingsService.SETTINGS_ID,
       aiRepliesEnabled: true,
       automationUrl: null,
+      n8nEditorUrl: null,
     });
 
     return repository.save(created);
@@ -72,6 +73,17 @@ export class SettingsService {
     return { automationUrl: this.getFallbackAutomationUrl(), source: "env" };
   }
 
+  async getN8nIntegrationConfig(): Promise<{ n8nEditorUrl: string; source: "db" | "env" }> {
+    const settings = await this.getSettingsRow();
+    const dbValue = settings.n8nEditorUrl?.trim();
+
+    if (dbValue) {
+      return { n8nEditorUrl: dbValue, source: "db" };
+    }
+
+    return { n8nEditorUrl: this.getFallbackAutomationUrl(), source: "env" };
+  }
+
   async setAutomationUrl(url: string): Promise<string> {
     const repository = AppDataSource.getRepository(WhatsappSettings);
     const settings = await this.getSettingsRow();
@@ -83,6 +95,16 @@ export class SettingsService {
       value: url,
       expiresAt: Date.now() + SettingsService.CACHE_TTL_MS,
     };
+
+    return url;
+  }
+
+  async setN8nEditorUrl(url: string): Promise<string> {
+    const repository = AppDataSource.getRepository(WhatsappSettings);
+    const settings = await this.getSettingsRow();
+
+    settings.n8nEditorUrl = url;
+    await repository.save(settings);
 
     return url;
   }
