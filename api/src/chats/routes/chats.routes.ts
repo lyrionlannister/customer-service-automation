@@ -5,6 +5,8 @@ export function createChatsRouter(chatsController: ChatsController): Router {
   const router = Router();
 
   router.get("/", (req, res) => chatsController.listConversations(req, res));
+  router.get("/stats/daily", (req, res) => chatsController.getConversationCountsByDay(req, res));
+  router.get("/stats/monthly", (req, res) => chatsController.getConversationCountsByMonth(req, res));
   router.get("/:sessionId", (req, res) => chatsController.getMessages(req, res));
 
   return router;

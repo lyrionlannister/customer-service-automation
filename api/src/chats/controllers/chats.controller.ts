@@ -30,4 +30,25 @@ export class ChatsController {
       res.status(500).json({ error: "Error al obtener los mensajes" });
     }
   }
+
+  async getConversationCountsByDay(_req: Request, res: Response): Promise<void> {
+    try {
+      const counts = await this.chatsService.getConversationCountsByDay();
+      res.status(200).json(counts);
+    } catch (error) {
+      console.error("Error obteniendo conteo diario", error);
+      res.status(500).json({ error: "Error al obtener el conteo diario" });
+    }
+  }
+
+  async getConversationCountsByMonth(req: Request, res: Response): Promise<void> {
+    try {
+      const year = Number(req.query.year ?? new Date().getFullYear());
+      const counts = await this.chatsService.getConversationCountsByMonth(year);
+      res.status(200).json(counts);
+    } catch (error) {
+      console.error("Error obteniendo conteo mensual", error);
+      res.status(500).json({ error: "Error al obtener el conteo mensual" });
+    }
+  }
 }
