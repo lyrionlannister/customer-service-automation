@@ -40,5 +40,22 @@ export function useMessages(sessionId: string | null) {
     fetchMessages().catch(console.error);
   }, [fetchMessages]);
 
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
+    const eventSource = new EventSource(`${baseUrl}/whatsapp/events`);
+
+    eventSource.addEventListener("message_received", (event) => {
+      const payload = JSON.parse((event as MessageEvent).data) as { sessionId?: string };
+      if (!payload.sessionId) return;
+      if (payload.sessionId === sessionId || `${payload.sessionId}@c.us` === sessionId) {
+        fetchMessages().catch(console.error);
+      }
+    });
+
+    return () => eventSource.close();
+  }, [fetchMessages, sessionId]);
+
   return { messages, loading, error };
 }
