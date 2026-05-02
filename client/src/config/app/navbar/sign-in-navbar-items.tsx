@@ -2,12 +2,12 @@ import { GridIcon } from "../../../modules/common/icons";
 import { MessageCircle, MessagesSquare } from "lucide-react";
 
 const signInNavbarItems = [
-  // {
-  //   name: "Inicio",
-  //   icon: <GridIcon />,
-  //   path: "/",
-  //   new: false,
-  // },
+  {
+    name: "Inicio",
+    icon: <GridIcon />,
+    path: "/admin",
+    new: false,
+  },
   {
     name: "Administrar WhatsApp",
     icon: <GridIcon />,

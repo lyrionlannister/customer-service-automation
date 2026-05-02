@@ -25,7 +25,8 @@ type ListenerEventType =
   | "ready"
   | "disconnected"
   | "state_change"
-  | "ai_replies_setting";
+  | "ai_replies_setting"
+  | "message_received";
 
 type ListenerEvent = {
   type: ListenerEventType;
@@ -265,6 +266,7 @@ export class WhatsappListener {
         };
 
         console.log("Mensaje recibido:", message);
+        this.emit("message_received", { sessionId: phone });
 
         const automationResponse =
           await this.processor.sendToAutomation(message);
@@ -279,6 +281,7 @@ export class WhatsappListener {
           to: chatId,
           body: automationResponse.reply,
         });
+        this.emit("message_received", { sessionId: phone });
       } catch (error) {
         console.error("Error procesando mensaje:", error);
       }
