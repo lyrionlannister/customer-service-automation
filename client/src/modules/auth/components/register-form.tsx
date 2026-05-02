@@ -6,6 +6,12 @@ import Label from "../../common/components/ui/inputs/label";
 import Button from "../../common/components/ui/button/button";
 import Alert from "../../common/components/ui/alert/alert";
 import { EyeCloseIcon, EyeIcon } from "../../common/icons";
+import {
+  INITIAL_REGISTER_FORM_DATA,
+  REGISTER_REDIRECT_DELAY_MS,
+} from "../constants/auth.constants";
+import { updateRegisterFormField } from "../helpers/auth-form.helpers";
+import type { RegisterFormData } from "../types/auth-form.types";
 
 const RegisterForm: React.FC = () => {
   const { register, loading, error, success, clearError, clearSuccess } =
@@ -13,19 +19,13 @@ const RegisterForm: React.FC = () => {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState<RegisterFormData>(
+    INITIAL_REGISTER_FORM_DATA,
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => updateRegisterFormField(prev, name, value));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ const RegisterForm: React.FC = () => {
       // Registro exitoso, redirigir a login o dashboard
       setTimeout(() => {
         navigate("/admin/sign-in", { replace: true });
-      }, 2000);
+      }, REGISTER_REDIRECT_DELAY_MS);
     }
   };
 
