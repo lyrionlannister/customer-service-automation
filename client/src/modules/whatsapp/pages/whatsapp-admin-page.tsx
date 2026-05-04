@@ -70,7 +70,7 @@ const WhatsAppAdminPage: React.FC = () => {
   }, [qrData.expiresAt]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
       <WhatsappHeader status={status} />
 
       <div className="grid gap-6 xl:grid-cols-2">

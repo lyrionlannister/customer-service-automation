@@ -81,15 +81,6 @@ const NavbarMenu: React.FC = () => {
             )}
           </button>
 
-          <Link to="/" className="lg:hidden">
-            <img className="dark:hidden" src="/images/logo.png" alt="Logo" />
-            <img
-              className="hidden dark:block"
-              src="/images/logo.png"
-              alt="Logo"
-            />
-          </Link>
-
           <button
             onClick={toggleApplicationMenu}
             className="flex items-center justify-center w-10 h-10 text-gray-400 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 lg:hidden"

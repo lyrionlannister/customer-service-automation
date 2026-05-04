@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings2, MessagesSquare, Users } from "lucide-react";
+import { LayoutDashboard, Settings2, MessagesSquare, Users, Wrench, Store } from "lucide-react";
 
 const signInNavbarItems = [
   {
@@ -23,6 +23,18 @@ const signInNavbarItems = [
     name: "Usuarios",
     icon: <Users className="w-5 h-5" />,
     path: "/admin/users",
+    new: false,
+  },
+  {
+    name: "Reparaciones",
+    icon: <Wrench className="w-5 h-5" />,
+    path: "/admin/repair-notes",
+    new: false,
+  },
+  {
+    name: "Mi Local",
+    icon: <Store className="w-5 h-5" />,
+    path: "/admin/local",
     new: false,
   },
 ];

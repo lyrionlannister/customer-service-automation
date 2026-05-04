@@ -19,6 +19,16 @@ import { ChatHistoryDao } from "./chats/daos/chat-history.dao.js";
 import { ChatsService } from "./chats/services/chats.service.js";
 import { ChatsController } from "./chats/controllers/chats.controller.js";
 import { createChatsRouter } from "./chats/routes/chats.routes.js";
+import { Local } from "./local/entities/local.entity.js";
+import { LocalDao } from "./local/daos/local.dao.js";
+import { LocalService } from "./local/services/local.service.js";
+import { LocalController } from "./local/controllers/local.controller.js";
+import { createLocalRouter } from "./local/routes/local.routes.js";
+import { RepairNote } from "./repair-notes/entities/repair-note.entity.js";
+import { RepairNoteDao } from "./repair-notes/daos/repair-note.dao.js";
+import { RepairNoteService } from "./repair-notes/services/repair-note.service.js";
+import { RepairNoteController } from "./repair-notes/controllers/repair-note.controller.js";
+import { createRepairNoteRouter } from "./repair-notes/routes/repair-note.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -51,12 +61,24 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const chatsService = new ChatsService(chatHistoryDao, contactNameRepository);
     const chatsController = new ChatsController(chatsService);
 
+    const localRepository = AppDataSource.getRepository(Local);
+    const localDao = new LocalDao(localRepository);
+    const localService = new LocalService(localDao);
+    const localController = new LocalController(localService);
+
+    const repairNoteRepository = AppDataSource.getRepository(RepairNote);
+    const repairNoteDao = new RepairNoteDao(repairNoteRepository);
+    const repairNoteService = new RepairNoteService(repairNoteDao, localService);
+    const repairNoteController = new RepairNoteController(repairNoteService);
+
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
     app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
     app.use("/api/v1/automation", createAutomationAdminRouter());
     app.use("/api/v1/integrations/n8n", createN8nIntegrationRouter());
     app.use("/api/v1/chats", createChatsRouter(chatsController));
+    app.use("/api/v1/local", createLocalRouter(localController));
+    app.use("/api/v1/repair-notes", createRepairNoteRouter(repairNoteController));
 
     app.get("/", (_req, res) => {
       res.status(200).json({

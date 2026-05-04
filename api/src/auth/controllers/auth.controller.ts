@@ -45,7 +45,7 @@ export class AuthController {
 
   toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params["id"] as string;
       const user = await this.authService.toggleUserStatus(id);
       if (!user) {
         res.status(404).json({ error: "Usuario no encontrado" });

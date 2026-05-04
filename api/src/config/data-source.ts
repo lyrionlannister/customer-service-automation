@@ -4,6 +4,8 @@ import { User } from "../auth/entities/user.entity.js";
 import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.js";
 import { WhatsappSettings } from "../whatsapp-admin/entities/whatsapp-settings.entity.js";
 import { ContactName } from "../chats/entities/contact-name.entity.js";
+import { Local } from "../local/entities/local.entity.js";
+import { RepairNote } from "../repair-notes/entities/repair-note.entity.js";
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -14,7 +16,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || "app_db",
   synchronize: true, // Auto-sync entities (deshabilitar en producción)
   logging: process.env.NODE_ENV === "development",
-  entities: [User, ExcludedPhone, WhatsappSettings, ContactName],
+  entities: [User, ExcludedPhone, WhatsappSettings, ContactName, Local, RepairNote],
 });
 
 export default AppDataSource;
