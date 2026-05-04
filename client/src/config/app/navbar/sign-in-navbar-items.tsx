@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings2, MessagesSquare } from "lucide-react";
+import { LayoutDashboard, Settings2, MessagesSquare, Users } from "lucide-react";
 
 const signInNavbarItems = [
   {
@@ -17,6 +17,12 @@ const signInNavbarItems = [
     name: "Configuración",
     icon: <Settings2 className="w-5 h-5" />,
     path: "/admin/whatsapp",
+    new: false,
+  },
+  {
+    name: "Usuarios",
+    icon: <Users className="w-5 h-5" />,
+    path: "/admin/users",
     new: false,
   },
 ];

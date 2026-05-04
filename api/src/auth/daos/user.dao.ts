@@ -10,4 +10,11 @@ export class UserDao extends BaseDao<User> {
   async findByEmail(email: string): Promise<User | null> {
     return this.findOne({ email } as Partial<User>);
   }
+
+  async toggleStatus(id: string): Promise<User | null> {
+    const user = await this.findOne({ id } as Partial<User>);
+    if (!user) return null;
+    user.isActive = !user.isActive;
+    return this.repository.save(user);
+  }
 }

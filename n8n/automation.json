@@ -38,7 +38,7 @@
       "name": "Buffer Redis",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -60,7 +60,7 @@
       "alwaysOutputData": true,
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -79,7 +79,7 @@
       "name": "Leer Espera Activa",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -142,7 +142,7 @@
       "name": "Marcar Espera Activa",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -172,7 +172,7 @@
       "name": "Leer Buffer",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -199,7 +199,7 @@
       "name": "Limpiar Buffer",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -216,7 +216,7 @@
       "name": "Limpiar Espera",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -265,7 +265,7 @@
       "name": "Leer Ruta Actual",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -413,7 +413,7 @@
       "name": "Guardar Ruta Garantia",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -433,7 +433,7 @@
       "name": "Guardar Ruta Reparacion",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -495,7 +495,7 @@
       "name": "Modelo Clasificador",
       "credentials": {
         "openAiApi": {
-          "id": "ZllqGQz4PDdr39A6",
+          "id": "ftg5QD4stVM2QZHU",
           "name": "OpenAI account"
         }
       }
@@ -517,7 +517,7 @@
       "name": "Modelo Garantia",
       "credentials": {
         "openAiApi": {
-          "id": "ZllqGQz4PDdr39A6",
+          "id": "ftg5QD4stVM2QZHU",
           "name": "OpenAI account"
         }
       }
@@ -539,7 +539,7 @@
       "name": "Modelo Reparacion",
       "credentials": {
         "openAiApi": {
-          "id": "ZllqGQz4PDdr39A6",
+          "id": "ftg5QD4stVM2QZHU",
           "name": "OpenAI account"
         }
       }
@@ -556,7 +556,7 @@
       "name": "Postgres Chat Memory",
       "credentials": {
         "postgres": {
-          "id": "ewmdvnBQLj4BH1ty",
+          "id": "VPGID1XiEqlwemU5",
           "name": "Postgres account"
         }
       }
@@ -584,7 +584,7 @@
       "name": "Guardar Memoria Bienvenida",
       "credentials": {
         "postgres": {
-          "id": "ewmdvnBQLj4BH1ty",
+          "id": "VPGID1XiEqlwemU5",
           "name": "Postgres account"
         }
       }
@@ -612,7 +612,7 @@
       "name": "Guardar Memoria Aclaracion",
       "credentials": {
         "postgres": {
-          "id": "ewmdvnBQLj4BH1ty",
+          "id": "VPGID1XiEqlwemU5",
           "name": "Postgres account"
         }
       }

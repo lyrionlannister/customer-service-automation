@@ -31,6 +31,18 @@ export class AuthService {
     return newUser;
   }
 
+  async getAllUsers(): Promise<Omit<User, "password">[]> {
+    const users = await this.userDao.findAll();
+    return users.map(({ password, ...rest }) => rest);
+  }
+
+  async toggleUserStatus(id: string): Promise<Omit<User, "password"> | null> {
+    const user = await this.userDao.toggleStatus(id);
+    if (!user) return null;
+    const { password, ...rest } = user;
+    return rest;
+  }
+
   async login(
     data: LoginUserDto,
   ): Promise<{ user: Omit<User, "password">; token: string }> {
