@@ -52,4 +52,24 @@ export class ChatsController {
       res.status(500).json({ error: CHATS_ERROR_MESSAGES.MONTHLY_COUNT });
     }
   }
+
+  async getWeekSessionCount(_req: Request, res: Response): Promise<void> {
+    try {
+      const count = await this.chatsService.getWeekSessionCount();
+      res.status(200).json({ count });
+    } catch (error) {
+      console.error("Error obteniendo conteo semanal", error);
+      res.status(500).json({ error: CHATS_ERROR_MESSAGES.WEEKLY_COUNT });
+    }
+  }
+
+  async getLastInteractionAt(_req: Request, res: Response): Promise<void> {
+    try {
+      const lastAt = await this.chatsService.getLastInteractionAt();
+      res.status(200).json({ lastAt });
+    } catch (error) {
+      console.error("Error obteniendo última interacción", error);
+      res.status(500).json({ error: CHATS_ERROR_MESSAGES.LAST_INTERACTION });
+    }
+  }
 }

@@ -33,4 +33,12 @@ export class ChatsService {
   async getConversationCountsByMonth(year: number): Promise<ConversationCountPoint[]> {
     return this.chatHistoryDao.getConversationCountsByMonth(year);
   }
+
+  async getWeekSessionCount(): Promise<number> {
+    return this.chatHistoryDao.getWeekSessionCount();
+  }
+
+  async getLastInteractionAt(): Promise<string | null> {
+    return this.chatHistoryDao.getLastInteractionAt();
+  }
 }

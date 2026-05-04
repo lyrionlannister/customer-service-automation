@@ -1,6 +1,10 @@
 import Badge from "@ui/badge/badge";
+import Button from "@ui/button/button";
+import { Workflow } from "lucide-react";
 import { STATUS_STYLES } from "../constants/whatsapp.constants";
 import type { WhatsappStatus } from "../types/whatsapp.types";
+
+const N8N_URL = (import.meta.env.VITE_N8N_URL as string | undefined) ?? "http://localhost:5678";
 
 type Props = {
   status: WhatsappStatus;
@@ -17,9 +21,16 @@ const WhatsappHeader: React.FC<Props> = ({ status }) => (
           Controla la conexión, las respuestas automáticas y los contactos excluidos.
         </p>
       </div>
-      <Badge color={STATUS_STYLES[status].color} variant="solid" size="lg">
-        {STATUS_STYLES[status].label}
-      </Badge>
+      <div className="flex items-center gap-3">
+        <a href={N8N_URL} target="_blank" rel="noreferrer">
+          <Button variant="outline" startIcon={<Workflow className="h-4 w-4" />}>
+            Ir a n8n
+          </Button>
+        </a>
+        <Badge color={STATUS_STYLES[status].color} variant="solid" size="lg">
+          {STATUS_STYLES[status].label}
+        </Badge>
+      </div>
     </div>
   </div>
 );

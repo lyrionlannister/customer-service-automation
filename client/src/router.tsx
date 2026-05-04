@@ -22,7 +22,7 @@ export const publicRoutes = [
 
 export const protectedRoutes = [
   {
-    path: "/admin",
+    path: "/admin/dashboard",
     element: <DashboardPage />,
   },
   {

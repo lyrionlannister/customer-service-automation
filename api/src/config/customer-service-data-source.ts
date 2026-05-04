@@ -4,11 +4,11 @@ import { ChatHistory } from "../chats/entities/chat-history.entity.js";
 
 const CustomerServiceDataSource = new DataSource({
   type: "postgres",
-  host: process.env.CS_DB_HOST ?? process.env.DB_HOST ?? "localhost",
-  port: parseInt(process.env.CS_DB_PORT ?? process.env.DB_PORT ?? "5432", 10),
-  username: process.env.CS_DB_USERNAME ?? "n8n",
-  password: process.env.CS_DB_PASSWORD ?? "n8n_password_dev",
-  database: process.env.CS_DB_NAME ?? "customer_service",
+  host: process.env.DB_HOST ?? "localhost",
+  port: parseInt(process.env.DB_PORT ?? "5432", 10),
+  username: process.env.DB_USERNAME ?? "n8n",
+  password: process.env.DB_PASSWORD ?? "n8n_password_dev",
+  database: process.env.N8N_DB_DATABASE ?? "n8n",
   synchronize: false,
   logging: process.env.NODE_ENV === "development",
   entities: [ChatHistory],

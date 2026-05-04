@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 import { useConversations, type Conversation } from "../hooks/use-conversations";
 import { useMessages } from "../hooks/use-messages";
 
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.length >= 10) {
-    return `+${digits.slice(0, -10)} ${digits.slice(-10, -7)} ${digits.slice(-7, -4)}-${digits.slice(-4)}`;
+    return `+${digits.slice(0, -10)} (${digits.slice(-10, -7)}) ${digits.slice(-7, -4)}-${digits.slice(-4)}`;
   }
   return `+${digits}`;
 }
@@ -19,6 +20,21 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+function getAvatarColor(seed: string): string {
+  const colors = [
+    "bg-[#e17055] text-white",
+    "bg-[#00b894] text-white",
+    "bg-[#0984e3] text-white",
+    "bg-[#6c5ce7] text-white",
+    "bg-[#fdcb6e] text-gray-800",
+    "bg-[#e84393] text-white",
+    "bg-[#00cec9] text-white",
+  ];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash += seed.charCodeAt(i);
+  return colors[hash % colors.length];
+}
+
 function ConversationItem({
   conversation,
   selected,
@@ -28,36 +44,39 @@ function ConversationItem({
   selected: boolean;
   onClick: () => void;
 }) {
-  const isLastFromBot = conversation.lastType === "ai";
   const displayName = conversation.contactName ?? formatPhone(conversation.phone);
   const avatarLabel = conversation.contactName
     ? getInitials(conversation.contactName)
-    : formatPhone(conversation.phone).slice(1, 3);
+    : conversation.phone.replace(/\D/g, "").slice(-2);
+  const avatarColor = getAvatarColor(conversation.sessionId);
+  const isBot = conversation.lastType === "ai";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${
-        selected ? "bg-gray-100 dark:bg-gray-800" : ""
+      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 dark:border-gray-800 ${
+        selected
+          ? "bg-[#f0f2f5] dark:bg-[#2a3942]"
+          : "hover:bg-[#f5f6f6] dark:hover:bg-[#1f2c33]"
       }`}
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white text-sm font-semibold">
+      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold ${avatarColor}`}>
         {avatarLabel}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-baseline justify-between">
+          <p className="truncate text-[15px] font-medium text-gray-900 dark:text-white">
             {displayName}
           </p>
-          <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
+          <span className="ml-2 shrink-0 text-xs text-gray-400 dark:text-gray-500">
             {conversation.messageCount} msgs
           </span>
         </div>
-        <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-          {isLastFromBot ? (
-            <span className="text-brand-500 dark:text-brand-400">Bot: </span>
-          ) : null}
+        <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+          {isBot && (
+            <span className="text-gray-400 dark:text-gray-500">🤖 </span>
+          )}
           {conversation.lastContent || "Sin mensajes"}
         </p>
       </div>
@@ -69,10 +88,10 @@ function MessageBubble({ content, fromMe }: { content: string; fromMe: boolean }
   return (
     <div className={`flex ${fromMe ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+        className={`relative max-w-[65%] px-3 py-2 text-sm leading-relaxed shadow-sm ${
           fromMe
-            ? "rounded-tr-sm bg-brand-500 text-white"
-            : "rounded-tl-sm bg-white text-gray-900 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-white dark:ring-gray-700"
+            ? "rounded-lg rounded-tr-none bg-[#DCF8C6] text-gray-900 dark:bg-[#005C4B] dark:text-white"
+            : "rounded-lg rounded-tl-none bg-white text-gray-900 dark:bg-[#1F2C33] dark:text-white"
         }`}
       >
         {content}
@@ -81,46 +100,18 @@ function MessageBubble({ content, fromMe }: { content: string; fromMe: boolean }
   );
 }
 
-function EmptyMessages() {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-12 w-12 opacity-40"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-        />
-      </svg>
-      <p className="text-sm">Sin mensajes en esta conversación</p>
-    </div>
-  );
-}
-
 function NoConversationSelected() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-16 w-16 opacity-30"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-        />
-      </svg>
-      <p className="text-sm">Selecciona una conversación</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-gray-400 dark:text-gray-500">
+      <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </div>
+      <div className="text-center">
+        <p className="text-lg font-medium text-gray-600 dark:text-gray-300">Bienvenido a Chats</p>
+        <p className="mt-1 text-sm">Selecciona una conversación para ver los mensajes</p>
+      </div>
     </div>
   );
 }
@@ -128,7 +119,8 @@ function NoConversationSelected() {
 const ChatsPage: React.FC = () => {
   const { conversations, loading: loadingConversations, error: convError } = useConversations();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const { messages, loading: loadingMessages, error: msgError } = useMessages(selectedSessionId);
+  const [search, setSearch] = useState("");
+  const { messages, loading: loadingMessages } = useMessages(selectedSessionId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -137,82 +129,120 @@ const ChatsPage: React.FC = () => {
 
   const selectedConversation = conversations.find((c) => c.sessionId === selectedSessionId);
 
-  return (
-    <div className="mx-auto max-w-7xl p-6">
-      <div className="mb-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">
-          Conversaciones
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Historial de chats procesados por el asistente.
-        </p>
-      </div>
+  const filtered = conversations.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.sessionId.toLowerCase().includes(q) ||
+      (c.contactName?.toLowerCase().includes(q) ?? false) ||
+      c.phone.includes(q)
+    );
+  });
 
-      <div className="flex h-[calc(100vh-268px)] min-h-[500px] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-soft dark:border-gray-700 dark:bg-gray-950">
-        {/* Panel izquierdo — lista de conversaciones */}
-        <div className="flex w-72 shrink-0 flex-col border-r border-gray-200 dark:border-gray-700">
-          <div className="border-b border-gray-200 px-4 py-6 dark:border-gray-700">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-              Chats
-            </p>
+  const displayName = selectedConversation
+    ? (selectedConversation.contactName ?? formatPhone(selectedConversation.phone))
+    : "";
+  const avatarLabel = selectedConversation
+    ? selectedConversation.contactName
+      ? getInitials(selectedConversation.contactName)
+      : selectedConversation.phone.replace(/\D/g, "").slice(-2)
+    : "";
+  const avatarColor = selectedConversation ? getAvatarColor(selectedConversation.sessionId) : "";
+
+  return (
+    <div className="flex h-[calc(100vh-152px)] min-h-[500px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft dark:border-gray-700 dark:bg-[#111B21]">
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Panel izquierdo */}
+        <div className="flex w-[340px] shrink-0 flex-col border-r border-gray-200 dark:border-gray-700">
+
+          {/* Header izquierdo */}
+          <div className="flex min-h-[61px] items-center justify-between bg-[#f0f2f5] px-4 py-2.5 dark:bg-[#1F2C33]">
+            <span className="text-base font-semibold text-gray-800 dark:text-white">Conversaciones</span>
+            {!loadingConversations && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {conversations.length} chats
+              </span>
+            )}
           </div>
 
+          {/* Buscador */}
+          <div className="bg-white px-3 py-2 dark:bg-[#111B21]">
+            <div className="flex items-center gap-2 rounded-lg bg-[#f0f2f5] px-3 py-1.5 dark:bg-[#202C33]">
+              <Search className="h-4 w-4 shrink-0 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar o empezar un chat"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none dark:text-gray-200 dark:placeholder-gray-500"
+              />
+            </div>
+          </div>
+
+          {/* Lista */}
           <div className="flex-1 overflow-y-auto">
             {loadingConversations ? (
-              <div className="flex flex-col gap-3 p-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 animate-pulse">
-                    <div className="h-10 w-10 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />
+              <div className="flex flex-col py-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />
                     <div className="flex-1 space-y-2">
                       <div className="h-3 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
-                      <div className="h-2 w-1/2 rounded bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-2.5 w-1/2 rounded bg-gray-200 dark:bg-gray-700" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : convError ? (
-              <p className="p-4 text-sm text-red-600 dark:text-red-400">{convError}</p>
-            ) : conversations.length === 0 ? (
-              <p className="p-4 text-sm text-gray-400 dark:text-gray-500">Sin conversaciones.</p>
+              <p className="p-4 text-sm text-red-500">{convError}</p>
+            ) : filtered.length === 0 ? (
+              <p className="p-4 text-sm text-gray-400 dark:text-gray-500">
+                {search ? "Sin resultados." : "Sin conversaciones."}
+              </p>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {conversations.map((conv) => (
-                  <ConversationItem
-                    key={conv.sessionId}
-                    conversation={conv}
-                    selected={conv.sessionId === selectedSessionId}
-                    onClick={() => setSelectedSessionId(conv.sessionId)}
-                  />
-                ))}
-              </div>
+              filtered.map((conv) => (
+                <ConversationItem
+                  key={conv.sessionId}
+                  conversation={conv}
+                  selected={conv.sessionId === selectedSessionId}
+                  onClick={() => setSelectedSessionId(conv.sessionId)}
+                />
+              ))
             )}
           </div>
         </div>
 
-        {/* Panel derecho — mensajes */}
+        {/* Panel derecho */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {selectedConversation ? (
-            <div className="border-b border-gray-200 px-5 py-3 dark:border-gray-700">
-              <p className="font-semibold text-gray-900 dark:text-white">
-                {selectedConversation.contactName ?? formatPhone(selectedConversation.phone)}
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                {formatPhone(selectedConversation.phone)}
-              </p>
+            /* Header del chat */
+            <div className="flex items-center gap-3 bg-[#f0f2f5] px-4 py-2.5 dark:bg-[#1F2C33]">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${avatarColor}`}>
+                {avatarLabel}
+              </div>
+              <div>
+                <p className="text-[15px] font-medium text-gray-900 dark:text-white">{displayName}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatPhone(selectedConversation.phone)}
+                </p>
+              </div>
             </div>
           ) : null}
 
-          <div className="flex flex-1 flex-col gap-3 overflow-y-auto bg-gray-50 p-4 dark:bg-gray-900">
+          {/* Área de mensajes */}
+          <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 bg-[#efeae2] dark:bg-[#0D1418]">
             {!selectedSessionId ? (
               <NoConversationSelected />
             ) : loadingMessages ? (
               <div className="flex flex-1 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#25D366] border-t-transparent dark:border-[#00a884] dark:border-t-transparent" />
               </div>
-            ) : msgError ? (
-              <p className="text-center text-sm text-red-600 dark:text-red-400">{msgError}</p>
             ) : messages.length === 0 ? (
-              <EmptyMessages />
+              <div className="flex flex-1 items-center justify-center">
+                <p className="rounded-lg bg-white/90 px-4 py-2 text-sm text-gray-500 shadow-sm dark:bg-[#1F2C33]/90 dark:text-gray-400">
+                  Sin mensajes en esta conversación
+                </p>
+              </div>
             ) : (
               messages.map((msg) => (
                 <MessageBubble key={msg.id} content={msg.content} fromMe={msg.fromMe} />
