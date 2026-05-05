@@ -15,6 +15,7 @@ import {
   TableCell,
 } from "@ui/table/table";
 import { EyeIcon, EyeCloseIcon } from "@common/icons";
+import PageMeta from "@common/pages/page-meta";
 
 interface FormData {
   firstName: string;
@@ -92,6 +93,7 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Usuarios" description="Gestión de usuarios" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">

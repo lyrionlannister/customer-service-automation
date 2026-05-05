@@ -6,6 +6,7 @@ import { usePriceList } from "../hooks/use-price-list";
 import Button from "@ui/button/button";
 import Label from "@ui/inputs/label";
 import Alert from "@ui/alert/alert";
+import PageMeta from "@common/pages/page-meta";
 
 const ImportPriceListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ const ImportPriceListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Importar PDF" description="Importar lista de precios desde PDF" />
       <div>
         <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">
           Importar PDF

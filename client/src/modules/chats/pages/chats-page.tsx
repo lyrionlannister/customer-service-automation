@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useConversations, type Conversation } from "../hooks/use-conversations";
 import { useMessages } from "../hooks/use-messages";
+import PageMeta from "@common/pages/page-meta";
 
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -150,6 +151,7 @@ const ChatsPage: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-152px)] min-h-[500px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft dark:border-gray-700 dark:bg-[#111B21]">
+      <PageMeta title="Chats" description="Conversaciones de WhatsApp" />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Panel izquierdo */}

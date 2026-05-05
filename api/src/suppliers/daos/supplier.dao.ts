@@ -17,6 +17,10 @@ export class SupplierDao {
     return this.repository.save(entity);
   }
 
+  async findByName(name: string): Promise<Supplier | null> {
+    return this.repository.findOneBy({ name });
+  }
+
   async count(): Promise<number> {
     return this.repository.count();
   }

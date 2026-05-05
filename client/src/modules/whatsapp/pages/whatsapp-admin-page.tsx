@@ -14,6 +14,7 @@ import WhatsappLinkDevice from "../components/whatsapp-link-device";
 import WhatsappAutomation from "../components/whatsapp-automation";
 import WhatsappExcludedPhones from "../components/whatsapp-excluded-phones";
 import WhatsappQrModal from "../components/whatsapp-qr-modal";
+import PageMeta from "@common/pages/page-meta";
 
 const WhatsAppAdminPage: React.FC = () => {
   const {
@@ -71,6 +72,7 @@ const WhatsAppAdminPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="WhatsApp" description="Configuración de WhatsApp" />
       <WhatsappHeader status={status} />
 
       <div className="grid gap-6 xl:grid-cols-2">

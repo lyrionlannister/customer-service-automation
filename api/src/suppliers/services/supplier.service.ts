@@ -18,11 +18,12 @@ export class SupplierService {
   }
 
   async seed(): Promise<void> {
-    const count = await this.dao.count();
-    if (count > 0) return;
     for (const data of SEED_SUPPLIERS) {
-      await this.dao.create(data);
+      const existing = await this.dao.findByName(data.name);
+      if (!existing) {
+        await this.dao.create(data);
+        console.log("Proveedor sembrado:", data.name);
+      }
     }
-    console.log("Proveedores sembrados:", SEED_SUPPLIERS.map((s) => s.name).join(", "));
   }
 }

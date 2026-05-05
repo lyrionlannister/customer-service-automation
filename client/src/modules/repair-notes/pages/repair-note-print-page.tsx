@@ -5,6 +5,7 @@ import { useRepairNotes } from "../hooks/use-repair-notes";
 import { useLocal } from "../../local/hooks/use-local";
 import type { RepairNoteRecord } from "../types/repair-note.types";
 import type { LocalRecord } from "../../local/hooks/use-local";
+import PageMeta from "@common/pages/page-meta";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const BLUE = "#1e40af";
@@ -500,6 +501,7 @@ const RepairNotePrintPage: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col">
+      <PageMeta title="Imprimir Nota" description="Vista de impresión" />
       <style>{`
         @page { margin: 0; }
         @media print {

@@ -17,6 +17,7 @@ import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Alert from "@ui/alert/alert";
 import Modal from "@ui/modal/Modal";
+import PageMeta from "@common/pages/page-meta";
 
 type FormState = {
   brand: string;
@@ -132,6 +133,7 @@ const PriceListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Lista de Precios" description="Lista de precios de productos" />
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">

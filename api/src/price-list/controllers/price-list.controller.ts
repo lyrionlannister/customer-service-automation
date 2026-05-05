@@ -78,13 +78,14 @@ export class PriceListController {
         return;
       }
 
-      if (supplier.name !== "MN Refacciones") {
+      const nameLC = supplier.name.toLowerCase();
+      if (nameLC !== "mn refacciones" && !nameLC.includes("tecnomax")) {
         res.status(200).json({ message: "en desarrollo" });
         return;
       }
 
       console.log("[controller] Llamando service.importFromPdf con buffer de", req.body.length, "bytes");
-      const result = await this.service.importFromPdf(req.body, supplierId);
+      const result = await this.service.importFromPdf(req.body, supplierId, supplier.name);
       console.log("[controller] importFromPdf OK, resultado:", result);
       res.status(200).json(result);
     } catch (error: any) {

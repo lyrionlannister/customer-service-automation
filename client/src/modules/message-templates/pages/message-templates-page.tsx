@@ -6,6 +6,7 @@ import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Alert from "@ui/alert/alert";
 import Modal from "@ui/modal/Modal";
+import PageMeta from "@common/pages/page-meta";
 
 interface FormState {
   key: string;
@@ -79,6 +80,7 @@ const MessageTemplatesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Templates" description="Plantillas de mensajes" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">

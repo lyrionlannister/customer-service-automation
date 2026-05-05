@@ -12,6 +12,7 @@ import {
   TableRow,
   TableCell,
 } from "@ui/table/table";
+import PageMeta from "@common/pages/page-meta";
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return "—";
@@ -52,6 +53,7 @@ const RepairNotesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Reparaciones" description="Notas de reparación" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">

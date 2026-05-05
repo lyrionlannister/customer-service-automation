@@ -14,6 +14,7 @@ import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
 import Alert from "@ui/alert/alert";
 import Toggle from "@ui/toggle/toggle";
+import PageMeta from "@common/pages/page-meta";
 
 const SERVICES = [
   { key: "serviceRepair", label: "Reparación" },
@@ -117,6 +118,10 @@ const RepairNoteFormPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta
+        title={isEdit ? "Editar Reparación" : "Nueva Reparación"}
+        description="Nota de reparación"
+      />
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate("/admin/repair-notes")}

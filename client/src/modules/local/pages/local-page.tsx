@@ -5,6 +5,7 @@ import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
 import Alert from "@ui/alert/alert";
+import PageMeta from "@common/pages/page-meta";
 
 const LocalPage: React.FC = () => {
   const { local, loading, saving, saveSuccess, error, fetchLocal, updateLocal } = useLocal();
@@ -68,6 +69,7 @@ const LocalPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Mi Local" description="Configuración del local" />
       <div>
         <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">
           Configuración del Local

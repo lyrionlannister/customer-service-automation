@@ -4,6 +4,7 @@ import type { ApexOptions } from "apexcharts";
 import { MessageSquare, CalendarDays, Clock, CalendarCheck2, TrendingUp } from "lucide-react";
 import Input from "@ui/inputs/input";
 import { useApiClient } from "../../common/hooks/use-api-client";
+import PageMeta from "@common/pages/page-meta";
 
 type Point = { bucket: string; count: number };
 
@@ -133,6 +134,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Dashboard" description="Panel de control" />
       <div>
         <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">
           Panel inicial
