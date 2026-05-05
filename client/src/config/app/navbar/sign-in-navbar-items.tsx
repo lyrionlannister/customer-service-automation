@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings2, MessagesSquare, Users, Wrench, Store } from "lucide-react";
+import { LayoutDashboard, Settings2, MessagesSquare, Users, Wrench, Store, MessageSquareText, Tags } from "lucide-react";
 
 const signInNavbarItems = [
   {
@@ -35,6 +35,18 @@ const signInNavbarItems = [
     name: "Mi Local",
     icon: <Store className="w-5 h-5" />,
     path: "/admin/local",
+    new: false,
+  },
+  {
+    name: "Templates",
+    icon: <MessageSquareText className="w-5 h-5" />,
+    path: "/admin/templates",
+    new: false,
+  },
+  {
+    name: "Lista de Precios",
+    icon: <Tags className="w-5 h-5" />,
+    path: "/admin/price-list",
     new: false,
   },
 ];

@@ -29,6 +29,21 @@ import { RepairNoteDao } from "./repair-notes/daos/repair-note.dao.js";
 import { RepairNoteService } from "./repair-notes/services/repair-note.service.js";
 import { RepairNoteController } from "./repair-notes/controllers/repair-note.controller.js";
 import { createRepairNoteRouter } from "./repair-notes/routes/repair-note.routes.js";
+import { MessageTemplate } from "./message-templates/entities/message-template.entity.js";
+import { MessageTemplateDao } from "./message-templates/daos/message-template.dao.js";
+import { MessageTemplateService } from "./message-templates/services/message-template.service.js";
+import { MessageTemplateController } from "./message-templates/controllers/message-template.controller.js";
+import { createMessageTemplateRouter } from "./message-templates/routes/message-template.routes.js";
+import { PriceListItem } from "./price-list/entities/price-list-item.entity.js";
+import { PriceListDao } from "./price-list/daos/price-list.dao.js";
+import { PriceListService } from "./price-list/services/price-list.service.js";
+import { PriceListController } from "./price-list/controllers/price-list.controller.js";
+import { createPriceListRouter } from "./price-list/routes/price-list.routes.js";
+import { Supplier } from "./suppliers/entities/supplier.entity.js";
+import { SupplierDao } from "./suppliers/daos/supplier.dao.js";
+import { SupplierService } from "./suppliers/services/supplier.service.js";
+import { SupplierController } from "./suppliers/controllers/supplier.controller.js";
+import { createSupplierRouter } from "./suppliers/routes/supplier.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -45,7 +60,7 @@ app.use(express.json());
 
 // Inicializar bases de datos
 Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()])
-  .then(() => {
+  .then(async () => {
     console.log("Bases de datos conectadas exitosamente");
 
     // Configurar servicios y controladores
@@ -71,6 +86,22 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const repairNoteService = new RepairNoteService(repairNoteDao, localService);
     const repairNoteController = new RepairNoteController(repairNoteService);
 
+    const messageTemplateRepository = AppDataSource.getRepository(MessageTemplate);
+    const messageTemplateDao = new MessageTemplateDao(messageTemplateRepository);
+    const messageTemplateService = new MessageTemplateService(messageTemplateDao);
+    const messageTemplateController = new MessageTemplateController(messageTemplateService);
+
+    const supplierRepository = AppDataSource.getRepository(Supplier);
+    const supplierDao = new SupplierDao(supplierRepository);
+    const supplierService = new SupplierService(supplierDao);
+    await supplierService.seed();
+    const supplierController = new SupplierController(supplierService);
+
+    const priceListRepository = AppDataSource.getRepository(PriceListItem);
+    const priceListDao = new PriceListDao(priceListRepository);
+    const priceListService = new PriceListService(priceListDao);
+    const priceListController = new PriceListController(priceListService, supplierService);
+
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
     app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
@@ -79,6 +110,9 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     app.use("/api/v1/chats", createChatsRouter(chatsController));
     app.use("/api/v1/local", createLocalRouter(localController));
     app.use("/api/v1/repair-notes", createRepairNoteRouter(repairNoteController));
+    app.use("/api/v1/message-templates", createMessageTemplateRouter(messageTemplateController));
+    app.use("/api/v1/suppliers", createSupplierRouter(supplierController));
+    app.use("/api/v1/price-list", createPriceListRouter(priceListController));
 
     app.get("/", (_req, res) => {
       res.status(200).json({

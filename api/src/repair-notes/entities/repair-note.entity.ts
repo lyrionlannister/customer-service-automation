@@ -8,84 +8,89 @@ import {
 
 @Entity("repair_notes")
 export class RepairNote {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn("uuid", { name: "id_nota_reparacion" })
   id!: string;
 
-  @Column({ type: "int" })
+  @Column({ type: "int", name: "numero_control" })
   controlNumber!: number;
 
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: "varchar", length: 255, nullable: false, name: "nombre_cliente" })
   customerName!: string;
 
-  @Column({ type: "varchar", length: 50, nullable: true })
+  @Column({ type: "varchar", length: 50, nullable: true, name: "numero_contacto" })
   contactNumber?: string;
 
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: "varchar", length: 255, nullable: false, name: "marca" })
   brand!: string;
 
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: "varchar", length: 255, nullable: false, name: "modelo" })
   model!: string;
 
-  @Column({ type: "text" })
+  @Column({ type: "text", nullable: false, name: "falla_reportada" })
   reportedFailure!: string;
 
-  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 10, scale: 2, default: 0, name: "valor_total" })
   totalValue!: number;
 
-  @Column({ type: "varchar", length: 50, default: "received" })
+  @Column({ type: "varchar", length: 50, default: "received", name: "estado" })
   status!: string;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "requiere_anticipo" })
   requiresAdvance!: boolean;
 
-  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true, name: "valor_anticipo" })
   advanceValue?: number;
 
-  @Column({ type: "date" })
+  @Column({ type: "date", name: "fecha_recepcion" })
   receivedAt!: string;
 
-  @Column({ type: "date", nullable: true })
+  @Column({ type: "date", nullable: true, name: "fecha_entrega" })
   deliveryDate?: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ type: "text", nullable: true, name: "notas_tecnico" })
   technicianNotes?: string;
 
-  @Column({ type: "varchar", length: 255, nullable: true })
+  @Column({ type: "varchar", length: 255, nullable: true, name: "nombre_tecnico" })
   technicianName?: string;
 
-  // Tipo de Servicio
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "servicio_reparacion" })
   serviceRepair!: boolean;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "servicio_mantenimiento" })
   serviceMaintenance!: boolean;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "servicio_diagnostico" })
   serviceDiagnostic!: boolean;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "servicio_revision" })
   serviceRevision!: boolean;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "servicio_dano_agua" })
   serviceWaterDamage!: boolean;
 
-  // Condición del equipo
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "dispositivo_apagado" })
   deviceOff!: boolean;
 
-  // Garantía
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "tiene_garantia" })
   hasWarranty!: boolean;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: "boolean", default: false, name: "tiene_garantia_extendida" })
   hasExtendedWarranty!: boolean;
 
-  @Column({ type: "int", nullable: true })
+  @Column({ type: "int", nullable: true, name: "dias_garantia_extendida" })
   extendedWarrantyDays?: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({
+    name: "fecha_creacion",
+    default: () => "CURRENT_TIMESTAMP",
+  })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    name: "fecha_actualizacion",
+    default: null,
+    onUpdate: "CURRENT_TIMESTAMP",
+    nullable: true,
+  })
   updatedAt!: Date;
 }

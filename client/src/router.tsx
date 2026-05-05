@@ -9,6 +9,9 @@ import LocalPage from "./modules/local/pages/local-page";
 import RepairNotesPage from "./modules/repair-notes/pages/repair-notes-page";
 import RepairNoteFormPage from "./modules/repair-notes/pages/repair-note-form-page";
 import RepairNotePrintPage from "./modules/repair-notes/pages/repair-note-print-page";
+import MessageTemplatesPage from "./modules/message-templates/pages/message-templates-page";
+import PriceListPage from "./modules/price-list/pages/price-list-page";
+import ImportPriceListPage from "./modules/price-list/pages/import-price-list-page";
 
 export const publicRoutes = [
   {
@@ -61,6 +64,18 @@ export const protectedRoutes = [
   {
     path: "/admin/repair-notes/:id/print",
     element: <RepairNotePrintPage />,
+  },
+  {
+    path: "/admin/templates",
+    element: <MessageTemplatesPage />,
+  },
+  {
+    path: "/admin/price-list",
+    element: <PriceListPage />,
+  },
+  {
+    path: "/admin/price-list/import",
+    element: <ImportPriceListPage />,
   },
 ];
 
