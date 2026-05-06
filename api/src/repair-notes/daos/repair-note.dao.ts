@@ -10,4 +10,8 @@ export class RepairNoteDao extends BaseDao<RepairNote> {
   async findAllOrdered(): Promise<RepairNote[]> {
     return this.repository.find({ order: { controlNumber: "DESC" } });
   }
+
+  async findByControlNumber(controlNumber: number): Promise<RepairNote | null> {
+    return this.repository.findOneBy({ controlNumber });
+  }
 }

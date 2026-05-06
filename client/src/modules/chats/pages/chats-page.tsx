@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Send, Bot, User, ArrowLeftRight } from "lucide-react";
 import { useConversations, type Conversation } from "../hooks/use-conversations";
 import { useMessages } from "../hooks/use-messages";
+import { useHumanMode } from "../hooks/use-human-mode";
 import PageMeta from "@common/pages/page-meta";
 
 function formatPhone(phone: string): string {
@@ -117,11 +118,55 @@ function NoConversationSelected() {
   );
 }
 
+function ManualReplyInput({
+  onSend,
+  sending,
+}: {
+  onSend: (body: string) => Promise<boolean>;
+  sending: boolean;
+}) {
+  const [text, setText] = useState("");
+
+  const handleSend = async () => {
+    if (!text.trim() || sending) return;
+    const ok = await onSend(text.trim());
+    if (ok) setText("");
+  };
+
+  return (
+    <div className="flex items-end gap-2 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-[#1F2C33]">
+      <textarea
+        rows={1}
+        placeholder="Escribe un mensaje..."
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend().catch(console.error);
+          }
+        }}
+        className="flex-1 resize-none rounded-lg bg-[#f0f2f5] px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none dark:bg-[#2A3942] dark:text-white dark:placeholder-gray-500"
+      />
+      <button
+        type="button"
+        onClick={() => handleSend().catch(console.error)}
+        disabled={!text.trim() || sending}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white transition-opacity disabled:opacity-40 dark:bg-[#00a884]"
+      >
+        <Send className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 const ChatsPage: React.FC = () => {
   const { conversations, loading: loadingConversations, error: convError } = useConversations();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const { messages, loading: loadingMessages } = useMessages(selectedSessionId);
+  const { isHumanMode, toggling, sending, activate, deactivate, sendMessage } =
+    useHumanMode(selectedSessionId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -222,11 +267,38 @@ const ChatsPage: React.FC = () => {
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${avatarColor}`}>
                 {avatarLabel}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-[15px] font-medium text-gray-900 dark:text-white">{displayName}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {formatPhone(selectedConversation.phone)}
                 </p>
+              </div>
+
+              {/* Badge de modo + botón de transferencia */}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                    isHumanMode
+                      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                      : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  }`}
+                >
+                  {isHumanMode ? (
+                    <><User className="h-3 w-3" /> Humano</>
+                  ) : (
+                    <><Bot className="h-3 w-3" /> IA</>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  disabled={toggling}
+                  onClick={() => (isHumanMode ? deactivate() : activate()).catch(console.error)}
+                  title={isHumanMode ? "Volver a IA" : "Transferir a humano"}
+                  className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-[#2A3942] dark:text-gray-300 dark:hover:bg-[#374248]"
+                >
+                  <ArrowLeftRight className="h-3 w-3" />
+                  {isHumanMode ? "Volver a IA" : "Transferir"}
+                </button>
               </div>
             </div>
           ) : null}
@@ -252,6 +324,11 @@ const ChatsPage: React.FC = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Input de respuesta manual — solo visible en modo humano */}
+          {selectedSessionId && isHumanMode && (
+            <ManualReplyInput onSend={sendMessage} sending={sending} />
+          )}
         </div>
       </div>
     </div>

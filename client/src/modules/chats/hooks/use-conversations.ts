@@ -49,6 +49,7 @@ export function useConversations() {
     eventSource.addEventListener("message_received", refresh);
     eventSource.addEventListener("ready", refresh);
     eventSource.addEventListener("disconnected", refresh);
+    eventSource.addEventListener("conversation_transferred", refresh);
 
     return () => eventSource.close();
   }, [fetchConversations]);

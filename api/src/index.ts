@@ -44,6 +44,12 @@ import { SupplierDao } from "./suppliers/daos/supplier.dao.js";
 import { SupplierService } from "./suppliers/services/supplier.service.js";
 import { SupplierController } from "./suppliers/controllers/supplier.controller.js";
 import { createSupplierRouter } from "./suppliers/routes/supplier.routes.js";
+import { Notification } from "./notifications/entities/notification.entity.js";
+import { NotificationDao } from "./notifications/daos/notification.dao.js";
+import { NotificationService } from "./notifications/services/notification.service.js";
+import { NotificationController } from "./notifications/controllers/notification.controller.js";
+import { createNotificationRouter } from "./notifications/routes/notification.routes.js";
+import { createN8nPublicRouter } from "./n8n/n8n-public.routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -102,6 +108,13 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const priceListService = new PriceListService(priceListDao);
     const priceListController = new PriceListController(priceListService, supplierService);
 
+    const notificationRepository = AppDataSource.getRepository(Notification);
+    const notificationDao = new NotificationDao(notificationRepository);
+    const notificationService = new NotificationService(notificationDao);
+    const notificationController = new NotificationController(notificationService);
+
+    await messageTemplateService.seed();
+
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
     app.use("/api/v1/whatsapp", createWhatsappAdminRouter(exclusionsRepository));
@@ -113,6 +126,8 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     app.use("/api/v1/message-templates", createMessageTemplateRouter(messageTemplateController));
     app.use("/api/v1/suppliers", createSupplierRouter(supplierController));
     app.use("/api/v1/price-list", createPriceListRouter(priceListController));
+    app.use("/api/v1/notifications", createNotificationRouter(notificationController));
+    app.use("/api/v1/n8n", createN8nPublicRouter(messageTemplateDao, priceListDao, repairNoteDao));
 
     app.get("/", (_req, res) => {
       res.status(200).json({

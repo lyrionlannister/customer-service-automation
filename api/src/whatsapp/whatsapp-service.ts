@@ -7,6 +7,7 @@ import AppDataSource from "../config/data-source.js";
 import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.js";
 import { WhatsappSettings } from "../whatsapp-admin/entities/whatsapp-settings.entity.js";
 import { ContactName } from "../chats/entities/contact-name.entity.js";
+import { humanModeService } from "../human-mode/human-mode.service.js";
 
 const { Client, LocalAuth } = whatsappWeb;
 const authPath = process.env.WHATSAPP_AUTH_PATH ?? ".wwebjs_auth";
@@ -26,7 +27,8 @@ type ListenerEventType =
   | "disconnected"
   | "state_change"
   | "ai_replies_setting"
-  | "message_received";
+  | "message_received"
+  | "conversation_transferred";
 
 type ListenerEvent = {
   type: ListenerEventType;
@@ -40,6 +42,7 @@ type IncomingMessage = {
 
 type AutomationResponse = {
   reply?: string;
+  transferToHuman?: boolean;
 };
 
 function clearStaleChromiumLocks(): void {
@@ -260,6 +263,13 @@ export class WhatsappListener {
             .catch((err) => console.warn("Error guardando nombre de contacto:", err));
         }
 
+        const isHumanMode = await humanModeService.isActive(phone);
+        if (isHumanMode) {
+          console.log("Conversación en modo humano, omitiendo IA", { from: phone });
+          this.emit("message_received", { sessionId: phone });
+          return;
+        }
+
         const message: IncomingMessage = {
           from: phone,
           body: body,
@@ -270,6 +280,13 @@ export class WhatsappListener {
 
         const automationResponse =
           await this.processor.sendToAutomation(message);
+
+        if (automationResponse?.transferToHuman) {
+          const contactName = name || undefined;
+          await humanModeService.activate(phone, contactName);
+          this.emit("conversation_transferred", { sessionId: phone, phone, contactName: contactName ?? null });
+          console.log("Conversación transferida a humano:", { phone });
+        }
 
         if (!automationResponse?.reply) {
           console.log("n8n no devolvió respuesta para enviar");
@@ -333,6 +350,17 @@ export class WhatsappListener {
   subscribe(listener: (event: ListenerEvent) => void): () => void {
     this.subscribers.add(listener);
     return () => this.subscribers.delete(listener);
+  }
+
+  broadcast(type: ListenerEventType, data: Record<string, unknown>): void {
+    this.emit(type, data);
+  }
+
+  async sendReply(phone: string, body: string): Promise<void> {
+    if (this.status !== "ready") {
+      throw new Error("WhatsApp no está conectado");
+    }
+    await this.processor.sendMessage(this.client, { to: `${phone}@c.us`, body });
   }
 
   private emit(type: ListenerEventType, data: Record<string, unknown>): void {

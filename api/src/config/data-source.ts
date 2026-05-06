@@ -9,6 +9,7 @@ import { RepairNote } from "../repair-notes/entities/repair-note.entity.js";
 import { MessageTemplate } from "../message-templates/entities/message-template.entity.js";
 import { PriceListItem } from "../price-list/entities/price-list-item.entity.js";
 import { Supplier } from "../suppliers/entities/supplier.entity.js";
+import { Notification } from "../notifications/entities/notification.entity.js";
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -19,7 +20,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || "app_db",
   synchronize: true, // Auto-sync entities (deshabilitar en producción)
   logging: process.env.NODE_ENV === "development",
-  entities: [User, ExcludedPhone, WhatsappSettings, ContactName, Local, RepairNote, MessageTemplate, PriceListItem, Supplier],
+  entities: [User, ExcludedPhone, WhatsappSettings, ContactName, Local, RepairNote, MessageTemplate, PriceListItem, Supplier, Notification],
 });
 
 export default AppDataSource;
