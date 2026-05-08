@@ -16,9 +16,39 @@ const DEFAULT_TEMPLATES: Array<{ key: string; text: string; description: string 
     description: "Cuando la falla no es de pantalla o el equipo no es accesible",
   },
   {
+    key: "diagnostico_sin_acceso",
+    text: "Entiendo. Si por ahora no puedes acceder al equipo o no identificas el modelo, te invitamos al local para un *Diagnóstico Técnico Gratuito*. Revisamos tu celular sin costo y te explicamos la mejor opción de reparación.",
+    description: "Cuando el cliente no sabe modelo o no puede acceder al equipo",
+  },
+  {
+    key: "diagnostico_no_pantalla",
+    text: "Gracias por la información. Como la falla no corresponde a pantalla/táctil, te invitamos al local para un *Diagnóstico Técnico Gratuito* y así identificar la causa exacta sin costo.",
+    description: "Cuando la falla reportada no es de pantalla",
+  },
+  {
     key: "cotizacion_pantalla",
     text: "¡Buenas noticias! Tenemos disponible la pantalla para tu *{{marca}} {{modelo}}*:\n\n💰 *Precio total: ${{precio}}*\n_(incluye pieza + mano de obra)_\n\n¿Te interesa agendar la reparación? 😊",
     description: "Envío de cotización de pantalla al cliente",
+  },
+  {
+    key: "cotizacion_pantalla_proveedor",
+    text: "Encontramos opción para tu *{{marca}} {{modelo}}* con *{{proveedor}}*:\n\n💰 *Precio estimado: ${{precio}}*\n\nSi gustas, te apoyamos para continuar con el proceso de reparación.",
+    description: "Cotización de pantalla indicando proveedor",
+  },
+  {
+    key: "cotizacion_fixoem",
+    text: "No encontramos stock en nuestros proveedores principales, pero localizamos una opción en *FIXOEM* para *{{modelo}}*:\n\n💰 *Precio de referencia: ${{precio}}*\n🔗 {{url}}\n\nSi te parece, también podemos revisarlo directamente en tienda con *Diagnóstico Técnico Gratuito*.",
+    description: "Respuesta cuando se encuentra opción en FIXOEM",
+  },
+  {
+    key: "cotizacion_mercadolibre",
+    text: "No encontramos existencia en proveedores ni en FIXOEM, pero localizamos una opción en *MercadoLibre* para *{{modelo}}*:\n\n💰 *Precio de referencia: ${{precio}}*\n🔗 {{url}}\n\nSi prefieres, podemos revisar tu equipo en tienda con *Diagnóstico Técnico Gratuito*.",
+    description: "Respuesta cuando se encuentra opción en MercadoLibre",
+  },
+  {
+    key: "sin_existencia_proveedores",
+    text: "Por el momento no encontramos disponibilidad para *{{modelo}}* en nuestros proveedores ni en búsquedas externas. Te invitamos al local para un *Diagnóstico Técnico Gratuito* y proponerte la mejor alternativa.",
+    description: "Cuando no hay existencia en proveedores ni fuentes externas",
   },
   {
     key: "cotizacion_aceptada",
