@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Workflow } from "lucide-react";
-import Button from "../../common/components/ui/button/Button";
+import Button from "../../common/components/ui/button/button";
 import { useApiClient } from "../../common/hooks/use-api-client";
 
 type Point = { bucket: string; count: number };

@@ -19,6 +19,7 @@ import { ChatHistoryDao } from "./chats/daos/chat-history.dao.js";
 import { ChatsService } from "./chats/services/chats.service.js";
 import { ChatsController } from "./chats/controllers/chats.controller.js";
 import { createChatsRouter } from "./chats/routes/chats.routes.js";
+import { seedAdminUser } from "./seed/admin-seed.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -38,8 +39,10 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
   .then(() => {
     console.log("Bases de datos conectadas exitosamente");
 
-    // Configurar servicios y controladores
     const userRepository = AppDataSource.getRepository(User);
+    await seedAdminUser(userRepository);
+
+    // Configurar servicios y controladores
     const exclusionsRepository = AppDataSource.getRepository(ExcludedPhone);
     const userDao = new UserDao(userRepository);
     const authService = new AuthService(userDao);

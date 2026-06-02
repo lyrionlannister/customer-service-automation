@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS deps
+FROM docker.io/library/node:22-bookworm-slim AS deps
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN pnpm build
 
-FROM node:22-bookworm-slim AS runtime
+FROM docker.io/library/node:22-bookworm-slim AS runtime
 
 ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium

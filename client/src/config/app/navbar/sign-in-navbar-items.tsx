@@ -1,5 +1,5 @@
 import { GridIcon } from "../../../modules/common/icons";
-import { MessageCircle, MessagesSquare } from "lucide-react";
+import { MessagesSquare } from "lucide-react";
 
 const signInNavbarItems = [
   {

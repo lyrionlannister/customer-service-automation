@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.40.1",
     "@tailwindcss/vite": "^4.1.5",
     "clsx": "^2.1.1",
     "jwt-decode": "^4.0.0",
@@ -30,6 +29,7 @@
     }
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@eslint/js": "^9.22.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -39,7 +39,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
-    "typescript": "~5.7.2",
+    "typescript": "~6.0.0",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.1",
     "vite-plugin-svgr": "^4.3.0"
