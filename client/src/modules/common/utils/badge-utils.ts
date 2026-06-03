@@ -4,6 +4,7 @@ export const baseStyles =
 export const sizeStyles = {
   sm: "text-theme-xs",
   md: "text-sm",
+  lg: "text-base",
 };
 
 export const variants = {

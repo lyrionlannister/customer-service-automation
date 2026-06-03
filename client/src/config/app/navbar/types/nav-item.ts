@@ -3,5 +3,5 @@ export default interface NavItem {
   icon: React.ReactNode;
   path?: string;
   new?: boolean;
-  subItems?: { name: string; path: string }[];
+  subItems?: { name: string; path: string; new?: boolean }[];
 }

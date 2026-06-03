@@ -50,6 +50,7 @@ import { NotificationService } from "./notifications/services/notification.servi
 import { NotificationController } from "./notifications/controllers/notification.controller.js";
 import { createNotificationRouter } from "./notifications/routes/notification.routes.js";
 import { createN8nPublicRouter } from "./n8n/n8n-public.routes.js";
+import { seedAdminUser } from "./seed/admin-seed.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -69,8 +70,10 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
   .then(async () => {
     console.log("Bases de datos conectadas exitosamente");
 
-    // Configurar servicios y controladores
     const userRepository = AppDataSource.getRepository(User);
+    await seedAdminUser(userRepository);
+
+    // Configurar servicios y controladores
     const exclusionsRepository = AppDataSource.getRepository(ExcludedPhone);
     const userDao = new UserDao(userRepository);
     const authService = new AuthService(userDao);

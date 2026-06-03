@@ -1,4 +1,5 @@
-import { LayoutDashboard, Settings2, MessagesSquare, Users, Wrench, Store, MessageSquareText, Tags } from "lucide-react";
+import { GridIcon } from "../../../modules/common/icons";
+import { MessagesSquare } from "lucide-react";
 
 const signInNavbarItems = [
   {

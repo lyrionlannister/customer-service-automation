@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { useApiClient } from "@common/hooks/use-api-client";
-import Button from "@ui/button/button";
-import Input from "@ui/inputs/input";
-import Badge from "@ui/badge/badge";
+import { useMemo } from "react";
 import { useWhatsappSession } from "../hooks/use-whatsapp-session";
 import { useWhatsappEvents } from "../hooks/use-whatsapp-events";
 import { useWhatsappSettings } from "../hooks/use-whatsapp-settings";
@@ -23,7 +19,6 @@ const WhatsAppAdminPage: React.FC = () => {
     qrData,
     setQrData,
     isQrModalOpen,
-    openQrModal,
     closeQrModal,
     isLoadingQr,
     qrError,
