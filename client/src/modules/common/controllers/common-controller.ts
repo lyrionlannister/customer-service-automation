@@ -1,5 +1,5 @@
 export default class CommonController {
-  private readonly baseUrl: string = import.meta.env.VITE_API_URL;
+  private readonly baseUrl: string = import.meta.env.VITE_API_BASE_URL;
   private abortControllers: Map<string, AbortController> = new Map();
   readonly token: string | null = sessionStorage.getItem("accessToken") || null;
 

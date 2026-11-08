@@ -1,4 +1,42 @@
 services:
+  nginx:
+    image: docker.io/library/nginx:alpine
+    container_name: customer-service-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - n8n
+      - client
+    networks:
+      - customer-service
+
+  certbot:
+    image: docker.io/certbot/certbot
+    container_name: customer-service-certbot
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done'
+    networks:
+      - customer-service
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL is required}
+    image: customer-service-client
+    container_name: customer-service-client
+    networks:
+      - customer-service
+
   api:
     build:
       context: ./api
@@ -13,12 +51,13 @@ services:
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_NAME: ${DB_NAME:?DB_NAME is required}
+      N8N_DB_DATABASE: ${N8N_DB_DATABASE:?N8N_DB_DATABASE is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
-      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
       ENABLE_WHATSAPP_LISTENER: ${ENABLE_WHATSAPP_LISTENER:?ENABLE_WHATSAPP_LISTENER is required}
       WHATSAPP_AUTH_PATH: ${WHATSAPP_AUTH_PATH:?WHATSAPP_AUTH_PATH is required}
       PUPPETEER_EXECUTABLE_PATH: ${PUPPETEER_EXECUTABLE_PATH:-/usr/bin/chromium}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     ports:
       - "${APP_PORT:?APP_PORT is required}:${APP_CONTAINER_PORT:?APP_CONTAINER_PORT is required}"
     volumes:
@@ -93,12 +132,15 @@ services:
       context: ./database
       dockerfile: redis.Dockerfile
     container_name: customer-service-redis
+    environment:
+      REDIS_USER: ${REDIS_USER:?REDIS_USER is required}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     ports:
       - "${REDIS_PORT:?REDIS_PORT is required}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli --user $REDIS_USER --pass $REDIS_PASSWORD --no-auth-warning ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -111,6 +153,8 @@ volumes:
   n8n_data:
   whatsapp_auth:
   whatsapp_cache:
+  certbot_certs:
+  certbot_www:
 
 networks:
   customer-service:

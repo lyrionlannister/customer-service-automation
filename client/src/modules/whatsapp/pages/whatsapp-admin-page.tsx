@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { useApiClient } from "@common/hooks/use-api-client";
-import Button from "@ui/button/button";
-import Input from "@ui/inputs/input";
-import Badge from "@ui/badge/badge";
+import { useMemo } from "react";
 import { useWhatsappSession } from "../hooks/use-whatsapp-session";
 import { useWhatsappEvents } from "../hooks/use-whatsapp-events";
 import { useWhatsappSettings } from "../hooks/use-whatsapp-settings";
@@ -14,6 +10,7 @@ import WhatsappLinkDevice from "../components/whatsapp-link-device";
 import WhatsappAutomation from "../components/whatsapp-automation";
 import WhatsappExcludedPhones from "../components/whatsapp-excluded-phones";
 import WhatsappQrModal from "../components/whatsapp-qr-modal";
+import PageMeta from "@common/pages/page-meta";
 
 const WhatsAppAdminPage: React.FC = () => {
   const {
@@ -22,7 +19,6 @@ const WhatsAppAdminPage: React.FC = () => {
     qrData,
     setQrData,
     isQrModalOpen,
-    openQrModal,
     closeQrModal,
     isLoadingQr,
     qrError,
@@ -70,7 +66,8 @@ const WhatsAppAdminPage: React.FC = () => {
   }, [qrData.expiresAt]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
+      <PageMeta title="WhatsApp" description="Configuración de WhatsApp" />
       <WhatsappHeader status={status} />
 
       <div className="grid gap-6 xl:grid-cols-2">

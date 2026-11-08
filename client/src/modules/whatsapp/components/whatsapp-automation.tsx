@@ -30,7 +30,7 @@ const WhatsappAutomation: React.FC<Props> = ({
           Configura el enlace del servicio encargado de procesar y enviar mensajes automáticos.
         </p>
       </div>
-      <Badge color={automationSource === "db" ? "success" : "secondary"} size="sm">
+      <Badge color={automationSource === "db" ? "success" : "light"} size="sm">
         {automationSource === "db" ? "Personalizada" : "Por defecto"}
       </Badge>
     </div>

@@ -38,7 +38,7 @@
       "name": "Buffer Redis",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -60,7 +60,7 @@
       "alwaysOutputData": true,
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -79,7 +79,7 @@
       "name": "Leer Espera Activa",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -142,7 +142,7 @@
       "name": "Marcar Espera Activa",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -172,7 +172,7 @@
       "name": "Leer Buffer",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -199,7 +199,7 @@
       "name": "Limpiar Buffer",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -216,7 +216,7 @@
       "name": "Limpiar Espera",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -265,7 +265,7 @@
       "name": "Leer Ruta Actual",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -413,7 +413,7 @@
       "name": "Guardar Ruta Garantia",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -433,7 +433,7 @@
       "name": "Guardar Ruta Reparacion",
       "credentials": {
         "redis": {
-          "id": "2jWHNW8ae8gTPHI6",
+          "id": "ySVCZTyRHVkXrapM",
           "name": "Redis account"
         }
       }
@@ -457,7 +457,7 @@
         "promptType": "define",
         "text": "={{ $('Consolidar Buffer').item.json.message }}",
         "options": {
-          "systemMessage": "Eres el asistente virtual de un local de reparaciones de celulares. Atiendes clientes por WhatsApp con tono amable, claro y profesional.\n\nEl cliente escribe por una reparacion nueva. Ayudalo a iniciar la consulta o cotizacion.\n\nPide los datos necesarios sin abrumar: modelo del celular, falla o problema, si recibio golpes/mojaduras y desde cuando ocurre. Si ya dio alguno de esos datos, no lo repitas.\n\nNo inventes precios, tiempos ni disponibilidad de piezas. Si falta informacion, solicitala. Mantente breve y util."
+          "systemMessage": "Eres un extractor de datos para un flujo automatizado de cotizaciones de reparacion de celulares.\n\nAnaliza el mensaje del cliente y responde SOLO JSON valido sin markdown ni texto adicional.\n\nCampos obligatorios:\n- wantsHuman: boolean (true si el cliente pide hablar con una persona/humano/asesor/agente).\n- knowsModel: boolean (true si el cliente menciona marca/modelo identificable).\n- canAccessPhone: boolean (false si dice que no puede usar/encender/desbloquear/acceder al equipo).\n- canIdentifyFailure: boolean (true si describe claramente la falla).\n- issueType: string exacto entre: \"screen\", \"other\", \"unknown\". Usa \"screen\" si menciona pantalla rota, display dañado, tactil no funciona, rayas/manchas en display, cristal/pantalla.\n- model: string (modelo detectado o \"\").\n- brand: string (marca detectada o \"\").\n\nNo inventes datos. Si no estas seguro, usa false, \"unknown\" o string vacio."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -468,8 +468,18 @@
     },
     {
       "parameters": {
+        "jsCode": "const analysisRaw = String($json.output || '').trim();\nconst contextId = $('Consolidar Buffer').item.json.context_id;\nconst customerMessage = String($('Consolidar Buffer').item.json.message || '');\n\nfunction parseAnalysis(raw) {\n  const fallback = {\n    wantsHuman: false,\n    knowsModel: false,\n    canAccessPhone: true,\n    canIdentifyFailure: false,\n    issueType: 'unknown',\n    model: '',\n    brand: ''\n  };\n\n  if (!raw) return fallback;\n\n  let payload = raw;\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  if (fenced?.[1]) payload = fenced[1].trim();\n\n  try {\n    const parsed = JSON.parse(payload);\n    return {\n      wantsHuman: parsed.wantsHuman === true,\n      knowsModel: parsed.knowsModel === true,\n      canAccessPhone: parsed.canAccessPhone !== false,\n      canIdentifyFailure: parsed.canIdentifyFailure === true,\n      issueType: ['screen', 'other', 'unknown'].includes(parsed.issueType) ? parsed.issueType : 'unknown',\n      model: String(parsed.model || '').trim(),\n      brand: String(parsed.brand || '').trim()\n    };\n  } catch {\n    return fallback;\n  }\n}\n\nconst analysis = parseAnalysis(analysisRaw);\n\nconst API_BASE = process.env.N8N_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'http://api:3000/api/v1/n8n';\n\nasync function getTemplate(key) {\n  const url = `${API_BASE}/message-templates/${encodeURIComponent(key)}`;\n  const response = await fetch(url);\n  if (!response.ok) return '';\n  const data = await response.json();\n  return String(data.text || '').trim();\n}\n\nfunction applyTemplate(text, values) {\n  return Object.entries(values).reduce((acc, [k, v]) => {\n    const safeValue = String(v ?? '');\n    return acc.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), safeValue);\n  }, text);\n}\n\nfunction normalize(str) {\n  return String(str || '')\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '');\n}\n\nconst msgNorm = normalize(customerMessage);\nconst hasScreenHint = /(pantalla|display|lcd|tactil|touch|cristal|vidrio)/.test(msgNorm);\nconst hasNoAccessHint = /(no\\s+prende|no\\s+enciende|no\\s+puedo\\s+acceder|no\\s+puedo\\s+usar|no\\s+tengo\\s+el\\s+telefono|no\\s+tengo\\s+el\\s+celular)/.test(msgNorm);\n\nif (hasNoAccessHint) analysis.canAccessPhone = false;\nif (hasScreenHint && analysis.issueType === 'unknown') analysis.issueType = 'screen';\n\nconst wantsHumanByText = /(humano|asesor|agente|persona|ejecutivo|representante)/.test(msgNorm) && /(hablar|comunicar|pasar|transfer)/.test(msgNorm);\nif (wantsHumanByText) analysis.wantsHuman = true;\n\nasync function searchSupplier(model, supplier) {\n  const url = `${API_BASE}/products/search?model=${encodeURIComponent(model)}&supplier=${encodeURIComponent(supplier)}`;\n  const response = await fetch(url);\n  if (!response.ok) return [];\n  const items = await response.json();\n  return Array.isArray(items) ? items : [];\n}\n\nfunction pickScreenItem(items) {\n  const includeTerms = ['pantalla', 'display', 'lcd', 'touch', 'tactil', 'oled', 'amoled'];\n  const excludeTerms = ['bateria', 'battery', 'pila'];\n\n  const scored = items.map((item) => {\n    const text = normalize(`${item.brand || ''} ${item.model || ''}`);\n    const includes = includeTerms.some((t) => text.includes(t));\n    const excludes = excludeTerms.some((t) => text.includes(t));\n    return { item, score: includes ? 2 : 1, excludes };\n  });\n\n  const filtered = scored.filter((x) => !x.excludes);\n  const pool = filtered.length ? filtered : scored;\n\n  if (!pool.length) return null;\n\n  pool.sort((a, b) => {\n    if (b.score !== a.score) return b.score - a.score;\n    return Number(a.item.price || 0) - Number(b.item.price || 0);\n  });\n\n  return pool[0].item;\n}\n\nasync function searchExternalPrice(url) {\n  try {\n    const response = await fetch(url, {\n      headers: {\n        'User-Agent': 'Mozilla/5.0 (compatible; n8n-bot/1.0)'\n      }\n    });\n\n    if (!response.ok) return null;\n\n    const html = await response.text();\n    const match = html.match(/\\$\\s?[0-9][0-9.,]{2,}/);\n    if (!match) return null;\n\n    return match[0].replace(/\\s+/g, '');\n  } catch {\n    return null;\n  }\n}\n\nasync function buildReply() {\n  if (analysis.wantsHuman) {\n    const tpl = await getTemplate('transferencia_humano');\n    return {\n      reply: tpl,\n      transferToHuman: true\n    };\n  }\n\n  if (!analysis.canAccessPhone || !analysis.knowsModel || !analysis.model) {\n    const tpl = await getTemplate('diagnostico_sin_acceso') || await getTemplate('diagnostico_gratuito');\n    return { reply: tpl, transferToHuman: false };\n  }\n\n  if (analysis.issueType !== 'screen') {\n    const tpl = await getTemplate('diagnostico_no_pantalla') || await getTemplate('diagnostico_gratuito');\n    return { reply: tpl, transferToHuman: false };\n  }\n\n  const model = analysis.model;\n\n  const tecnomaxItems = await searchSupplier(model, 'tecnomax');\n  const tecnomaxScreen = pickScreenItem(tecnomaxItems);\n  if (tecnomaxScreen) {\n    const tpl = await getTemplate('cotizacion_pantalla_proveedor') || await getTemplate('cotizacion_pantalla');\n    return {\n      reply: applyTemplate(tpl, {\n        marca: tecnomaxScreen.brand || analysis.brand || '',\n        modelo: tecnomaxScreen.model || model,\n        precio: Number(tecnomaxScreen.price || 0).toFixed(2),\n        proveedor: tecnomaxScreen.supplier || 'Tecnomax'\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const mnItems = await searchSupplier(model, 'mn refacciones');\n  const mnScreen = pickScreenItem(mnItems);\n  if (mnScreen) {\n    const tpl = await getTemplate('cotizacion_pantalla_proveedor') || await getTemplate('cotizacion_pantalla');\n    return {\n      reply: applyTemplate(tpl, {\n        marca: mnScreen.brand || analysis.brand || '',\n        modelo: mnScreen.model || model,\n        precio: Number(mnScreen.price || 0).toFixed(2),\n        proveedor: mnScreen.supplier || 'MN Refacciones'\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const fixoemUrl = `https://www.fixoem.com/search?q=${encodeURIComponent(`${model} pantalla`)}`;\n  const fixoemPrice = await searchExternalPrice(fixoemUrl);\n  if (fixoemPrice) {\n    const tpl = await getTemplate('cotizacion_fixoem');\n    return {\n      reply: applyTemplate(tpl, {\n        modelo: model,\n        precio: fixoemPrice,\n        url: fixoemUrl\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const mlUrl = `https://listado.mercadolibre.com.mx/${encodeURIComponent(`${model} pantalla`)}`;\n  const mlPrice = await searchExternalPrice(mlUrl);\n  if (mlPrice) {\n    const tpl = await getTemplate('cotizacion_mercadolibre');\n    return {\n      reply: applyTemplate(tpl, {\n        modelo: model,\n        precio: mlPrice,\n        url: mlUrl\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const tpl = await getTemplate('sin_existencia_proveedores') || await getTemplate('diagnostico_gratuito');\n  return {\n    reply: applyTemplate(tpl, { modelo: model }),\n    transferToHuman: false\n  };\n}\n\nconst result = await buildReply();\n\nreturn [{\n  json: {\n    context_id: contextId,\n    reply: result.reply,\n    transferToHuman: result.transferToHuman\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 592],
+      "id": "2fb7f5f0-70c7-4fb2-9646-63a6c8199dce",
+      "name": "Resolver Flujo Reparacion"
+    },
+    {
+      "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { reply: $json.output } }}",
+        "responseBody": "={{ { reply: $json.reply ?? $json.output ?? '', transferToHuman: $json.transferToHuman === true } }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -495,7 +505,7 @@
       "name": "Modelo Clasificador",
       "credentials": {
         "openAiApi": {
-          "id": "ZllqGQz4PDdr39A6",
+          "id": "ftg5QD4stVM2QZHU",
           "name": "OpenAI account"
         }
       }
@@ -517,7 +527,7 @@
       "name": "Modelo Garantia",
       "credentials": {
         "openAiApi": {
-          "id": "ZllqGQz4PDdr39A6",
+          "id": "ftg5QD4stVM2QZHU",
           "name": "OpenAI account"
         }
       }
@@ -539,7 +549,7 @@
       "name": "Modelo Reparacion",
       "credentials": {
         "openAiApi": {
-          "id": "ZllqGQz4PDdr39A6",
+          "id": "ftg5QD4stVM2QZHU",
           "name": "OpenAI account"
         }
       }
@@ -556,7 +566,7 @@
       "name": "Postgres Chat Memory",
       "credentials": {
         "postgres": {
-          "id": "ewmdvnBQLj4BH1ty",
+          "id": "VPGID1XiEqlwemU5",
           "name": "Postgres account"
         }
       }
@@ -584,7 +594,7 @@
       "name": "Guardar Memoria Bienvenida",
       "credentials": {
         "postgres": {
-          "id": "ewmdvnBQLj4BH1ty",
+          "id": "VPGID1XiEqlwemU5",
           "name": "Postgres account"
         }
       }
@@ -612,7 +622,7 @@
       "name": "Guardar Memoria Aclaracion",
       "credentials": {
         "postgres": {
-          "id": "ewmdvnBQLj4BH1ty",
+          "id": "VPGID1XiEqlwemU5",
           "name": "Postgres account"
         }
       }
@@ -936,6 +946,17 @@
       ]
     },
     "Agente Reparacion": {
+      "main": [
+        [
+          {
+            "node": "Resolver Flujo Reparacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Flujo Reparacion": {
       "main": [
         [
           {

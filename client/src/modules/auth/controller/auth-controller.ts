@@ -37,7 +37,7 @@ export class AuthController extends CommonController {
       { refreshToken: refreshToken },
       headers
     );
-    return response.data;
+    return (response as { data: unknown } | null)?.data ?? null;
   };
 }
 

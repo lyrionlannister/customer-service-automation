@@ -1,10 +1,21 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from "typeorm";
 
-@Entity({ name: "excluded_phone" })
+@Entity("excluded_phone")
 export class ExcludedPhone {
-  @PrimaryColumn({ type: "varchar", length: 64 })
+  @PrimaryColumn({ type: "varchar", length: 64, name: "telefono" })
   phone!: string;
 
-  @Column({ type: "timestamptz", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn({
+    name: "fecha_creacion",
+    default: () => "CURRENT_TIMESTAMP",
+  })
   createdAt!: Date;
+
+  @UpdateDateColumn({
+    name: "fecha_actualizacion",
+    default: null,
+    onUpdate: "CURRENT_TIMESTAMP",
+    nullable: true,
+  })
+  updatedAt!: Date;
 }

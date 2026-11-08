@@ -1,4 +1,6 @@
+import { Loader2, QrCode, Unplug } from "lucide-react";
 import Button from "@ui/button/button";
+import Tooltip from "@ui/tooltip/tooltip";
 import type { QrResponse, WhatsappStatus } from "../types/whatsapp.types";
 
 type Props = {
@@ -33,25 +35,31 @@ const WhatsappLinkDevice: React.FC<Props> = ({
         </p>
       </div>
       {status === "ready" ? (
-        <Button
-          variant="danger"
-          size="md"
-          className="min-w-40"
-          onClick={onCloseSession}
-          disabled={isClosingSession}
-        >
-          {isClosingSession ? "Desconectando..." : "Desconectar dispositivo"}
-        </Button>
+        <Tooltip text={isClosingSession ? "Desconectando..." : "Desconectar dispositivo"}>
+          <Button
+            variant="danger"
+            size="md"
+            onClick={onCloseSession}
+            disabled={isClosingSession}
+          >
+            {isClosingSession
+              ? <Loader2 className="size-5 animate-spin" />
+              : <Unplug className="size-5" />}
+          </Button>
+        </Tooltip>
       ) : (
-        <Button
-          variant="primary"
-          size="md"
-          className="min-w-35"
-          onClick={onFetchQr}
-          disabled={isLoadingQr}
-        >
-          {isLoadingQr ? "Generando..." : "Generar código QR"}
-        </Button>
+        <Tooltip text={isLoadingQr ? "Generando..." : "Ver QR"}>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onFetchQr}
+            disabled={isLoadingQr}
+          >
+            {isLoadingQr
+              ? <Loader2 className="size-5 animate-spin" />
+              : <QrCode className="size-5" />}
+          </Button>
+        </Tooltip>
       )}
     </div>
 

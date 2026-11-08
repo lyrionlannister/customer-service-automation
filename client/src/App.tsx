@@ -22,7 +22,7 @@ const LoginOnlyWhenLoggedOut: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   if (isAuthenticated()) {
-    return <Navigate to="/admin/whatsapp" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -32,7 +32,7 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/whatsapp" replace />} />
+        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
 
         {publicRoutes.map((route, index) => {
           const isAuthRoute =
