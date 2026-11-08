@@ -1,4 +1,4 @@
-import Button from "@ui/button/button";
+import Toggle from "@ui/toggle/toggle";
 import { STATUS_STYLES } from "../constants/whatsapp.constants";
 import type { WhatsappStatus } from "../types/whatsapp.types";
 
@@ -22,29 +22,29 @@ const WhatsappAiReplies: React.FC<Props> = ({
           Respuestas automáticas
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-500">
-          Activa o desactiva las respuestas automáticas con inteligencia artificial.
+          Activa o desactiva las respuestas automáticas con inteligencia
+          artificial.
         </p>
       </div>
-      <Button
-        variant={aiRepliesEnabled ? "success" : "secondary"}
-        size="md"
-        onClick={onToggle}
-        disabled={isSavingSettings}
-      >
-        {aiRepliesEnabled ? "Desactivar respuestas" : "Activar respuestas"}
-      </Button>
+      <Toggle checked={aiRepliesEnabled} onChange={onToggle} disabled={isSavingSettings} />
     </div>
 
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Respuestas automáticas</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Respuestas automáticas
+        </p>
         <p className="mt-2 text-xl font-semibold">
           {aiRepliesEnabled ? "Activadas" : "Desactivadas"}
         </p>
       </div>
       <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Estado de conexión</p>
-        <p className="mt-2 text-xl font-semibold">{STATUS_STYLES[status].label}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Estado de conexión
+        </p>
+        <p className="mt-2 text-xl font-semibold">
+          {STATUS_STYLES[status].label}
+        </p>
       </div>
     </div>
   </section>

@@ -1,6 +1,7 @@
+import type { FC } from "react";
 import InputProps from "../../../types/interfaces/props/input-props";
 
-const Input: React.FC<InputProps> = ({
+const Input: FC<InputProps> = ({
   type = "text",
   id,
   name,
@@ -12,6 +13,7 @@ const Input: React.FC<InputProps> = ({
   max,
   step,
   disabled = false,
+  required = false,
   success = false,
   error = false,
   hint,
@@ -41,6 +43,7 @@ const Input: React.FC<InputProps> = ({
         max={max}
         step={step}
         disabled={disabled}
+        required={required}
         className={inputClasses}
       />
 

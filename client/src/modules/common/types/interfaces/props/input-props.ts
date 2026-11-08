@@ -8,8 +8,9 @@ export default interface InputProps {
   className?: string;
   min?: string;
   max?: string;
-  step?: number;
+  step?: number | string;
   disabled?: boolean;
+  required?: boolean;
   success?: boolean;
   error?: boolean;
   hint?: string;

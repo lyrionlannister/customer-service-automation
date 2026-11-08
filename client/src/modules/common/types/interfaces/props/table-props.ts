@@ -1,8 +1,5 @@
-/**
- * Props para el componente Table.
- * @property children - Contenido de la tabla (thead, tbody, etc.).
- * @property className - Clases adicionales para personalizar estilos.
- */
+import type { ReactNode } from "react";
+
 export default interface TableProps {
   children: ReactNode;
   className?: string;
@@ -48,4 +45,5 @@ export interface TableCellProps {
   children: ReactNode;
   isHeader?: boolean;
   className?: string;
+  colSpan?: number;
 }

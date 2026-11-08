@@ -15,6 +15,14 @@ export interface ConversationCountPoint {
   count: number;
 }
 
+export interface WeekSessionCount {
+  count: number;
+}
+
+export interface LastInteractionResult {
+  lastAt: string | null;
+}
+
 export class ChatHistoryDao extends BaseDao<ChatHistory> {
   constructor(repository: Repository<ChatHistory>) {
     super(repository);
@@ -43,23 +51,54 @@ export class ChatHistoryDao extends BaseDao<ChatHistory> {
 
   async getConversationCountsByDay(): Promise<ConversationCountPoint[]> {
     return this.repository.query(`
-      SELECT TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS bucket, COUNT(*)::int AS count
-      FROM n8n_chat_histories
-      GROUP BY DATE_TRUNC('day', created_at)
-      ORDER BY DATE_TRUNC('day', created_at) ASC
+      SELECT
+        TO_CHAR(d, 'YYYY-MM-DD') AS bucket,
+        COALESCE(COUNT(h.id), 0)::int AS count
+      FROM generate_series(
+        CURRENT_DATE - INTERVAL '29 days',
+        CURRENT_DATE,
+        INTERVAL '1 day'
+      ) AS d
+      LEFT JOIN n8n_chat_histories h ON h.created_at::date = d::date
+      GROUP BY d
+      ORDER BY d ASC
     `);
   }
 
   async getConversationCountsByMonth(year: number): Promise<ConversationCountPoint[]> {
     return this.repository.query(
       `
-      SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS bucket, COUNT(*)::int AS count
-      FROM n8n_chat_histories
-      WHERE EXTRACT(YEAR FROM created_at) = $1
-      GROUP BY DATE_TRUNC('month', created_at)
-      ORDER BY DATE_TRUNC('month', created_at) ASC
-    `,
+      SELECT
+        TO_CHAR(m, 'YYYY-MM') AS bucket,
+        COALESCE(COUNT(DISTINCT h.session_id), 0)::int AS count
+      FROM generate_series(
+        MAKE_DATE($1, 1, 1)::timestamp,
+        MAKE_DATE($1, 12, 1)::timestamp,
+        INTERVAL '1 month'
+      ) AS m
+      LEFT JOIN n8n_chat_histories h
+        ON DATE_TRUNC('month', h.created_at) = DATE_TRUNC('month', m)
+      GROUP BY m
+      ORDER BY m ASC
+      `,
       [year],
     );
+  }
+
+  async getWeekSessionCount(): Promise<number> {
+    const result = await this.repository.query(`
+      SELECT COUNT(DISTINCT session_id)::int AS count
+      FROM n8n_chat_histories
+      WHERE created_at >= DATE_TRUNC('week', CURRENT_TIMESTAMP)
+    `);
+    return result[0]?.count ?? 0;
+  }
+
+  async getLastInteractionAt(): Promise<string | null> {
+    const result = await this.repository.query(`
+      SELECT MAX(created_at) AS "lastAt"
+      FROM n8n_chat_histories
+    `);
+    return result[0]?.lastAt ?? null;
   }
 }

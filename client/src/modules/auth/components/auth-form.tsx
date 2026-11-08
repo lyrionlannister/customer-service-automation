@@ -6,27 +6,20 @@ import Label from "../../common/components/ui/inputs/label";
 import Button from "../../common/components/ui/button/button";
 import Alert from "../../common/components/ui/alert/alert";
 import { EyeCloseIcon, EyeIcon } from "../../common/icons";
+import { AUTH_REDIRECT_DELAY_MS, INITIAL_AUTH_FORM_DATA } from "../constants/auth.constants";
+import { updateAuthFormField } from "../helpers/auth-form.helpers";
+import type { AuthFormData } from "../types/auth-form.types";
 
-interface AuthFormProps {
-  controller?: any; // Para compatibilidad hacia atrás
-}
-
-const AuthForm: React.FC<AuthFormProps> = () => {
+const AuthForm: React.FC = () => {
   const { login, loading, error, success, clearError, clearSuccess } =
     useLogin();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState<AuthFormData>(INITIAL_AUTH_FORM_DATA);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => updateAuthFormField(prev, name, value));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +32,7 @@ const AuthForm: React.FC<AuthFormProps> = () => {
       // Login exitoso, redirigir al dashboard
       setTimeout(() => {
         navigate("/", { replace: true });
-      }, 1000);
+      }, AUTH_REDIRECT_DELAY_MS);
     }
   };
 

@@ -1,3 +1,3 @@
-const signInHeaderItems = [];
+const signInHeaderItems: never[] = [];
 
 export default signInHeaderItems;

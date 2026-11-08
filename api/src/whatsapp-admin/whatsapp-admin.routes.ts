@@ -24,6 +24,9 @@ export function createWhatsappAdminRouter(
 
   router.get("/events", (_req, res) => {
     setupSseHeaders(res);
+    res.write(`event: state_change\ndata: ${JSON.stringify({ status: listener.getStatus() })}\n\n`);
+
+    const heartbeat = setInterval(() => res.write(": keep-alive\n\n"), 25_000);
 
     const unsubscribe = listener.subscribe((event) => {
       res.write(`event: ${event.type}\n`);
@@ -31,6 +34,7 @@ export function createWhatsappAdminRouter(
     });
 
     _req.on("close", () => {
+      clearInterval(heartbeat);
       unsubscribe();
       res.end();
     });

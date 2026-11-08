@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Link } from "react-router";
 import useSidebar from "../../hooks/use-sidebar";
 import UserDropdown from "./user-dropdown";
 import ThemeToggleButton from "./theme-toggle-button";
@@ -80,15 +79,6 @@ const NavbarMenu: React.FC = () => {
               </svg>
             )}
           </button>
-
-          <Link to="/" className="lg:hidden">
-            <img className="dark:hidden" src="/images/logo.png" alt="Logo" />
-            <img
-              className="hidden dark:block"
-              src="/images/logo.png"
-              alt="Logo"
-            />
-          </Link>
 
           <button
             onClick={toggleApplicationMenu}

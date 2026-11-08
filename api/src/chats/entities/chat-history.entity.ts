@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 export type ChatMessageType = "human" | "ai";
 
@@ -21,4 +21,7 @@ export class ChatHistory {
 
   @Column({ type: "jsonb" })
   message!: ChatMessagePayload;
+
+  @CreateDateColumn({ name: "created_at", type: "timestamptz", default: () => "CURRENT_TIMESTAMP" })
+  createdAt!: Date;
 }

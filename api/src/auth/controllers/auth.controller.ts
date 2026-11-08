@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
+import { AUTH_MESSAGES } from "../constants/auth.constants.js";
+import { getValidationMessages } from "../helpers/auth.helpers.js";
 import { AuthService } from "../services/auth.service.js";
 import { RegisterUserDto } from "../dtos/register-user.dto.js";
 import { LoginUserDto } from "../dtos/login-user.dto.js";
@@ -14,9 +16,7 @@ export class AuthController {
       const errors = await validate(dto);
 
       if (errors.length > 0) {
-        const messages = errors
-          .flatMap((err) => Object.values(err.constraints || {}))
-          .join(", ");
+        const messages = getValidationMessages(errors);
         res.status(400).json({ error: messages });
         return;
       }
@@ -25,12 +25,35 @@ export class AuthController {
       const { password, ...userWithoutPassword } = user;
 
       res.status(201).json({
-        message: "Usuario registrado exitosamente",
+        message: AUTH_MESSAGES.REGISTER_SUCCESS,
         user: userWithoutPassword,
       });
     } catch (error: any) {
-      const message = error.message || "Error en el registro";
+      const message = error.message || AUTH_MESSAGES.REGISTER_ERROR;
       res.status(400).json({ error: message });
+    }
+  };
+
+  getUsers = async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const users = await this.authService.getAllUsers();
+      res.status(200).json(users);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || AUTH_MESSAGES.REGISTER_ERROR });
+    }
+  };
+
+  toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params["id"] as string;
+      const user = await this.authService.toggleUserStatus(id);
+      if (!user) {
+        res.status(404).json({ error: "Usuario no encontrado" });
+        return;
+      }
+      res.status(200).json(user);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || AUTH_MESSAGES.REGISTER_ERROR });
     }
   };
 
@@ -40,9 +63,7 @@ export class AuthController {
       const errors = await validate(dto);
 
       if (errors.length > 0) {
-        const messages = errors
-          .flatMap((err) => Object.values(err.constraints || {}))
-          .join(", ");
+        const messages = getValidationMessages(errors);
         res.status(400).json({ error: messages });
         return;
       }
@@ -50,12 +71,12 @@ export class AuthController {
       const { user, token } = await this.authService.login(dto);
 
       res.status(200).json({
-        message: "Sesión iniciada exitosamente",
+        message: AUTH_MESSAGES.LOGIN_SUCCESS,
         user,
         token,
       });
     } catch (error: any) {
-      const message = error.message || "Error al iniciar sesión";
+      const message = error.message || AUTH_MESSAGES.LOGIN_ERROR;
       res.status(401).json({ error: message });
     }
   };

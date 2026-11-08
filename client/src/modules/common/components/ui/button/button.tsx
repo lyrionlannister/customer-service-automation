@@ -1,10 +1,11 @@
+import type { FC } from "react";
 import ButtonProps from "@/modules/common/types/interfaces/props/button-props";
 import {
   sizeClasses,
   variantClasses,
 } from "@/modules/common/utils/button-utils";
 
-const Button: React.FC<ButtonProps> = ({
+const Button: FC<ButtonProps> = ({
   children,
   size = "md",
   variant = "primary",
@@ -13,9 +14,11 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   className = "",
   disabled = false,
+  type = "button",
 }) => {
   return (
     <button
+      type={type}
       className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${
