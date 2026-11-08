@@ -55,7 +55,7 @@ import { seedAdminUser } from "./seed/admin-seed.js";
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
 const enableWhatsappListener = process.env.ENABLE_WHATSAPP_LISTENER === "true";
-const allowedOrigins = "http://localhost:4300"
+const allowedOrigins = ["http://localhost:4300", "https://app.kaltra.local"];
 
 app.use(
   cors({

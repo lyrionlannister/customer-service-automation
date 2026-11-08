@@ -16,7 +16,7 @@ import Button from "@ui/button/button";
 import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Alert from "@ui/alert/alert";
-import Modal from "@ui/modal/Modal";
+import Modal from "@ui/modal/modal";
 import PageMeta from "@common/pages/page-meta";
 
 type FormState = {

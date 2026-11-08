@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Link } from "react-router";
 import useSidebar from "../../hooks/use-sidebar";
 import UserDropdown from "./user-dropdown";
 import ThemeToggleButton from "./theme-toggle-button";

@@ -13,6 +13,7 @@ const Input: FC<InputProps> = ({
   max,
   step,
   disabled = false,
+  required = false,
   success = false,
   error = false,
   hint,
@@ -42,6 +43,7 @@ const Input: FC<InputProps> = ({
         max={max}
         step={step}
         disabled={disabled}
+        required={required}
         className={inputClasses}
       />
 

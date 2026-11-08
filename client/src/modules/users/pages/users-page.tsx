@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import { useUsers } from "../hooks/use-users";
 import Toggle from "@ui/toggle/toggle";
-import Modal from "@ui/modal/Modal";
+import Modal from "@ui/modal/modal";
 import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
