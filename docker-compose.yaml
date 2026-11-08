@@ -3,8 +3,8 @@ services:
     image: docker.io/library/nginx:alpine
     container_name: customer-service-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "${NGINX_HTTP_PORT:-8080}:80"
+      - "${NGINX_HTTPS_PORT:-8443}:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - certbot_certs:/etc/letsencrypt:ro
@@ -57,7 +57,12 @@ services:
       WHATSAPP_AUTH_PATH: ${WHATSAPP_AUTH_PATH:?WHATSAPP_AUTH_PATH is required}
       PUPPETEER_EXECUTABLE_PATH: ${PUPPETEER_EXECUTABLE_PATH:-/usr/bin/chromium}
       REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_USER: ${REDIS_USER:?REDIS_USER is required}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      N8N_INTERNAL_TOKEN: ${N8N_INTERNAL_TOKEN:?N8N_INTERNAL_TOKEN is required}
+      # Puerto interno del contenedor de Redis (siempre 6379) -- no confundir con
+      # REDIS_PORT, que es el puerto publicado en el host para el mapeo de abajo.
+      REDIS_PORT: 6379
     ports:
       - "${APP_PORT:?APP_PORT is required}:${APP_CONTAINER_PORT:?APP_CONTAINER_PORT is required}"
     volumes:
@@ -95,6 +100,7 @@ services:
       DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:?N8N_DB_PASSWORD is required}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:?GENERIC_TIMEZONE is required}
       TZ: ${TZ:?TZ is required}
+      N8N_INTERNAL_TOKEN: ${N8N_INTERNAL_TOKEN:?N8N_INTERNAL_TOKEN is required}
     ports:
       - "${N8N_PORT:?N8N_PORT is required}:${N8N_PORT:?N8N_PORT is required}"
     volumes:

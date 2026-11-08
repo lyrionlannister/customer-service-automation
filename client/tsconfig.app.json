@@ -24,17 +24,16 @@
     "noUncheckedSideEffectImports": true,
 
     /* Path mapping */
-    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./*"],
-      "@modules/*": ["modules/*"],
-      "@common/*": ["modules/common/*"],
-      "@website/*": ["config/website/*"],
-      "@types/*": ["modules/common/types/*"],
-      "@controller/*": ["modules/common/controllers/*"],
-      "@hooks/*": ["modules/common/hooks/*"],
-      "@ui/*": ["modules/common/components/ui/*"],
-      "@contexts/*": ["modules/common/contexts/*"]
+      "@/*": ["./src/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@common/*": ["./src/modules/common/*"],
+      "@website/*": ["./src/config/website/*"],
+      "@types/*": ["./src/modules/common/types/*"],
+      "@controller/*": ["./src/modules/common/controllers/*"],
+      "@hooks/*": ["./src/modules/common/hooks/*"],
+      "@ui/*": ["./src/modules/common/components/ui/*"],
+      "@contexts/*": ["./src/modules/common/contexts/*"]
     }
   },
   "include": ["src"]

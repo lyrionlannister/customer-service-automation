@@ -8,9 +8,8 @@ coverage/
 *.bak
 
 data/
-
-.claude/
-CLAUDE.md
+tasks/
+.claude/settings.local.json
 
 # Logs
 logs
@@ -37,7 +36,6 @@ dist-ssr
 *.sln
 *.sw?
 
-pnpm-lock.yaml
 .env.production
 .env.development
 temp_auto_push.bat
