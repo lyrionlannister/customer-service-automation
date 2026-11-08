@@ -12,6 +12,12 @@ import RepairNotePrintPage from "./modules/repair-notes/pages/repair-note-print-
 import MessageTemplatesPage from "./modules/message-templates/pages/message-templates-page";
 import PriceListPage from "./modules/price-list/pages/price-list-page";
 import ImportPriceListPage from "./modules/price-list/pages/import-price-list-page";
+import InventoryPage from "./modules/inventory/pages/inventory-page";
+import QuickSalePage from "./modules/inventory/pages/quick-sale-page";
+import QuotesPage from "./modules/quotes/pages/quotes-page";
+import QuoteFormPage from "./modules/quotes/pages/quote-form-page";
+import QuotePrintPage from "./modules/quotes/pages/quote-print-page";
+import CashPage from "./modules/cash/pages/cash-page";
 
 export const publicRoutes = [
   {
@@ -76,6 +82,34 @@ export const protectedRoutes = [
   {
     path: "/admin/price-list/import",
     element: <ImportPriceListPage />,
+  },
+  {
+    path: "/admin/inventory",
+    element: <InventoryPage />,
+  },
+  {
+    path: "/admin/sales/new",
+    element: <QuickSalePage />,
+  },
+  {
+    path: "/admin/quotes",
+    element: <QuotesPage />,
+  },
+  {
+    path: "/admin/quotes/new",
+    element: <QuoteFormPage />,
+  },
+  {
+    path: "/admin/quotes/:id/edit",
+    element: <QuoteFormPage />,
+  },
+  {
+    path: "/admin/quotes/:id/print",
+    element: <QuotePrintPage />,
+  },
+  {
+    path: "/admin/cash",
+    element: <CashPage />,
   },
 ];
 

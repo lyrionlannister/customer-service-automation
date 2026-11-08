@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient } from "../../common/hooks/use-api-client";
+import { authenticatedEventSourceUrl } from "../../common/utils/auth-header";
 
 export function useHumanMode(sessionId: string | null) {
   const { apiClient } = useApiClient();
@@ -30,7 +31,7 @@ export function useHumanMode(sessionId: string | null) {
 
   useEffect(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-    const eventSource = new EventSource(`${baseUrl}/whatsapp/events`);
+    const eventSource = new EventSource(authenticatedEventSourceUrl(`${baseUrl}/whatsapp/events`));
     eventSource.addEventListener("conversation_transferred", (event) => {
       const payload = JSON.parse((event as MessageEvent).data) as { sessionId?: string };
       if (payload.sessionId === sessionId) {

@@ -99,7 +99,7 @@ const MessageTemplatesPage: React.FC = () => {
       {error && <Alert variant="error" title="Error" message={error} />}
       {successMsg && <Alert variant="success" title="Listo" message={successMsg} />}
 
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             Cargando templates...
@@ -111,7 +111,7 @@ const MessageTemplatesPage: React.FC = () => {
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-white/[0.02]">
+            <thead className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-white/2">
               <tr>
                 <th className="px-5 py-3 text-left font-medium text-gray-500 dark:text-gray-400 w-48">
                   Clave
@@ -129,7 +129,7 @@ const MessageTemplatesPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {templates.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-white/2">
                   <td className="px-5 py-4 align-top">
                     <code className="text-xs bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded font-mono">
                       {t.key}

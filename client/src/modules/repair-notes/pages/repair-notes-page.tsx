@@ -97,7 +97,7 @@ const RepairNotesPage: React.FC = () => {
         </select>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             Cargando notas...
@@ -132,7 +132,7 @@ const RepairNotesPage: React.FC = () => {
                   return (
                     <TableRow
                       key={note.id}
-                      className="border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800/50 dark:hover:bg-white/[0.02]"
+                      className="border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800/50 dark:hover:bg-white/2"
                     >
                       <TableCell className="px-4 py-4 text-sm font-semibold text-gray-800 dark:text-white/90">
                         #{note.controlNumber}

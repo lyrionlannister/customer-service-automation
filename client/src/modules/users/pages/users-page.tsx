@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { UserPlus } from "lucide-react";
-import { useUsers } from "../hooks/use-users";
+import { useUsers, type PayCycle, type UserRole } from "../hooks/use-users";
 import Toggle from "@ui/toggle/toggle";
 import Modal from "@ui/modal/modal";
 import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
 import Alert from "@ui/alert/alert";
+import Select from "@ui/select/select";
 import {
   Table,
   TableHeader,
@@ -22,6 +23,9 @@ interface FormData {
   lastName: string;
   email: string;
   password: string;
+  role: UserRole;
+  salaryAmount: string;
+  payCycle: PayCycle | "";
 }
 
 const INITIAL_FORM: FormData = {
@@ -29,6 +33,21 @@ const INITIAL_FORM: FormData = {
   lastName: "",
   email: "",
   password: "",
+  role: "employee",
+  salaryAmount: "",
+  payCycle: "",
+};
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  owner: "Dueño",
+  admin: "Administrador",
+  employee: "Empleado",
+};
+
+const PAY_CYCLE_LABELS: Record<PayCycle, string> = {
+  weekly: "Semanal",
+  biweekly: "Quincenal",
+  monthly: "Mensual",
 };
 
 const formatDate = (dateStr: string) => {
@@ -72,7 +91,15 @@ const UsersPage: React.FC = () => {
     e.preventDefault();
     clearCreateError();
     clearCreateSuccess();
-    const result = await createUser(formData);
+    const result = await createUser({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role,
+      salaryAmount: formData.salaryAmount ? Number(formData.salaryAmount) : undefined,
+      payCycle: formData.payCycle || undefined,
+    });
     if (result) {
       setFormData(INITIAL_FORM);
       fetchUsers();
@@ -112,7 +139,7 @@ const UsersPage: React.FC = () => {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             Cargando usuarios...
@@ -144,6 +171,12 @@ const UsersPage: React.FC = () => {
                     isHeader
                     className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
                   >
+                    Rol
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                  >
                     Creado
                   </TableCell>
                   <TableCell
@@ -158,13 +191,16 @@ const UsersPage: React.FC = () => {
                 {users.map((user) => (
                   <TableRow
                     key={user.id}
-                    className="border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800/50 dark:hover:bg-white/[0.02]"
+                    className="border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800/50 dark:hover:bg-white/2"
                   >
                     <TableCell className="px-6 py-4 text-sm font-medium text-gray-800 dark:text-white/90">
                       {user.firstName} {user.lastName}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {user.email}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {ROLE_LABELS[user.role]}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {formatDate(user.createdAt)}
@@ -278,7 +314,39 @@ const UsersPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <Button variant="primary" className="w-full" disabled={creating}>
+            <div>
+              <Label className="text-gray-500">Rol</Label>
+              <Select
+                value={formData.role}
+                onChange={(value) => setFormData((prev) => ({ ...prev, role: value as UserRole }))}
+                disabled={creating}
+                options={Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            <div>
+              <Label className="text-gray-500">Salario</Label>
+              <Input
+                type="number"
+                placeholder="Ej. 4500"
+                name="salaryAmount"
+                value={formData.salaryAmount}
+                onChange={handleChange}
+                disabled={creating}
+              />
+            </div>
+            <div>
+              <Label className="text-gray-500">Ciclo de pago</Label>
+              <Select
+                value={formData.payCycle}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, payCycle: value as PayCycle | "" }))
+                }
+                disabled={creating}
+                placeholder="Sin ciclo de pago"
+                options={Object.entries(PAY_CYCLE_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            <Button type="submit" variant="primary" className="w-full" disabled={creating}>
               {creating ? "Creando..." : "Crear usuario"}
             </Button>
           </div>

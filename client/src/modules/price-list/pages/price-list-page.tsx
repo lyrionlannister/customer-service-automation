@@ -208,7 +208,7 @@ const PriceListPage: React.FC = () => {
       </div>
 
       {/* Tabla */}
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             Cargando lista de precios...
@@ -246,7 +246,7 @@ const PriceListPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/2">
                     <td className="px-5 py-3 text-gray-500 dark:text-gray-400 text-xs">
                       {item.brand}
                     </td>

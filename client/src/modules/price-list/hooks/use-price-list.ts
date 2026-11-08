@@ -27,7 +27,6 @@ export const usePriceList = () => {
   const { apiClient } = useApiClient();
   const [items, setItems] = useState<PriceListItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +62,7 @@ export const usePriceList = () => {
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error((body as any).error ?? "Error al crear item");
+          throw new Error((body as { error?: string }).error ?? "Error al crear item");
         }
         const created: PriceListItem = await res.json();
         setItems((prev) =>
@@ -128,37 +127,5 @@ export const usePriceList = () => {
     [apiClient],
   );
 
-  const uploadPdf = useCallback(
-    async (
-      file: File,
-      supplierId: string,
-    ): Promise<{ imported?: number; message?: string } | null> => {
-      setUploading(true);
-      setError(null);
-      try {
-        const buffer = await file.arrayBuffer();
-        const res = await apiClient(
-          `/price-list/upload?supplierId=${encodeURIComponent(supplierId)}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/pdf", ...authHeader() },
-            body: buffer,
-          },
-        );
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error((body as any).error ?? "Error al procesar el PDF");
-        }
-        return await res.json();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error desconocido");
-        return null;
-      } finally {
-        setUploading(false);
-      }
-    },
-    [apiClient],
-  );
-
-  return { items, loading, uploading, saving, error, fetchAll, create, update, remove, uploadPdf };
+  return { items, loading, saving, error, fetchAll, create, update, remove };
 };

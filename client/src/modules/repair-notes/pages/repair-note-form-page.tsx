@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { ArrowLeft } from "lucide-react";
-import { useRepairNotes } from "../hooks/use-repair-notes";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useRepairNotes, type RepairNoteItemInput } from "../hooks/use-repair-notes";
+import { useInventory } from "@modules/inventory/hooks/use-inventory";
 import {
   INITIAL_FORM,
   STATUS_CONFIG,
@@ -14,7 +15,11 @@ import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
 import Alert from "@ui/alert/alert";
 import Toggle from "@ui/toggle/toggle";
+import Select from "@ui/select/select";
 import PageMeta from "@common/pages/page-meta";
+
+type ItemLine = { inventoryItemId: string; quantity: string; unitPrice: string };
+const emptyItemLine: ItemLine = { inventoryItemId: "", quantity: "1", unitPrice: "" };
 
 const SERVICES = [
   { key: "serviceRepair", label: "Reparación" },
@@ -76,16 +81,31 @@ const RepairNoteFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
 
-  const { note, loading, saving, error, fetchNote, createNote, updateNote, clearError } =
+  const { note, loading, saving, error, fetchNote, fetchNoteItems, createNote, updateNote, clearError } =
     useRepairNotes();
+  const { items: inventoryItems, fetchAll: fetchInventory } = useInventory();
 
   const [form, setForm] = useState<RepairNoteFormData>(INITIAL_FORM);
+  const [itemLines, setItemLines] = useState<ItemLine[]>([]);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
 
   useEffect(() => {
     if (isEdit && id) {
       fetchNote(id);
+      fetchNoteItems(id).then((items) =>
+        setItemLines(
+          items.map((i) => ({
+            inventoryItemId: i.inventoryItemId,
+            quantity: String(i.quantity),
+            unitPrice: String(i.unitPrice),
+          })),
+        ),
+      );
     }
-  }, [isEdit, id, fetchNote]);
+  }, [isEdit, id, fetchNote, fetchNoteItems]);
 
   useEffect(() => {
     if (note && isEdit) {
@@ -96,14 +116,35 @@ const RepairNoteFormPage: React.FC = () => {
   const set = (field: keyof RepairNoteFormData, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  const updateItemLine = (index: number, patch: Partial<ItemLine>) =>
+    setItemLines((prev) => prev.map((line, i) => (i === index ? { ...line, ...patch } : line)));
+
+  const handleItemChange = (index: number, inventoryItemId: string) => {
+    const item = inventoryItems.find((i) => i.id === inventoryItemId);
+    updateItemLine(index, { inventoryItemId, unitPrice: item ? String(item.salePrice) : "" });
+  };
+
+  const addItemLine = () => setItemLines((prev) => [...prev, { ...emptyItemLine }]);
+  const removeItemLine = (index: number) => setItemLines((prev) => prev.filter((_, i) => i !== index));
+
+  const buildItemsPayload = (): RepairNoteItemInput[] =>
+    itemLines
+      .filter((l) => l.inventoryItemId && Number(l.quantity) > 0)
+      .map((l) => ({
+        inventoryItemId: l.inventoryItemId,
+        quantity: Number(l.quantity),
+        unitPrice: Number(l.unitPrice) || 0,
+      }));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
+    const items = buildItemsPayload();
     if (isEdit && id) {
-      const result = await updateNote(id, form);
+      const result = await updateNote(id, form, items);
       if (result) navigate("/admin/repair-notes");
     } else {
-      const result = await createNote(form);
+      const result = await createNote(form, items);
       if (result) navigate("/admin/repair-notes");
     }
   };
@@ -145,7 +186,7 @@ const RepairNoteFormPage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Cliente */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <SectionTitle>Datos del cliente</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -173,7 +214,7 @@ const RepairNoteFormPage: React.FC = () => {
         </div>
 
         {/* Equipo */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <SectionTitle>Datos del equipo</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -218,7 +259,7 @@ const RepairNoteFormPage: React.FC = () => {
         </div>
 
         {/* Tipo de servicio */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <SectionTitle>Tipo de servicio</SectionTitle>
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
             {SERVICES.map(({ key, label }) => (
@@ -240,7 +281,7 @@ const RepairNoteFormPage: React.FC = () => {
         </div>
 
         {/* Fechas y técnico */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <SectionTitle>Fechas y técnico</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
@@ -287,8 +328,64 @@ const RepairNoteFormPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Items usados */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
+          <SectionTitle>Items usados</SectionTitle>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Accesorios o partes del inventario consumidos en esta reparación — descuentan stock automáticamente.
+          </p>
+          <div className="space-y-3">
+            {itemLines.map((line, index) => (
+              <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Select
+                    value={line.inventoryItemId}
+                    onChange={(value) => handleItemChange(index, value)}
+                    placeholder="Selecciona un item"
+                    disabled={saving}
+                    options={inventoryItems.map((i) => ({
+                      value: i.id,
+                      label: `${i.name} (stock: ${i.quantityOnHand})`,
+                    }))}
+                  />
+                </div>
+                <div className="w-full sm:w-24">
+                  <Input
+                    type="number"
+                    placeholder="Cant."
+                    value={line.quantity}
+                    onChange={(e) => updateItemLine(index, { quantity: e.target.value })}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="w-full sm:w-32">
+                  <Input
+                    type="number"
+                    placeholder="Precio"
+                    value={line.unitPrice}
+                    onChange={(e) => updateItemLine(index, { unitPrice: e.target.value })}
+                    disabled={saving}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeItemLine(index)}
+                  disabled={saving}
+                  className="p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={addItemLine} disabled={saving}>
+              <Plus className="mr-1.5 size-4" />
+              Agregar item
+            </Button>
+          </div>
+        </div>
+
         {/* Costo */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <SectionTitle>Costo</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
@@ -331,7 +428,7 @@ const RepairNoteFormPage: React.FC = () => {
         </div>
 
         {/* Garantía */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <SectionTitle>Garantía</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
@@ -372,7 +469,7 @@ const RepairNoteFormPage: React.FC = () => {
 
         {/* Estado (solo en edición) */}
         {isEdit && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
             <SectionTitle>Estado de la nota</SectionTitle>
             <div className="max-w-xs">
               <select
@@ -410,7 +507,7 @@ const RepairNoteFormPage: React.FC = () => {
           >
             Cancelar
           </Button>
-          <Button variant="primary" disabled={saving}>
+          <Button type="submit" variant="primary" disabled={saving}>
             {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear nota"}
           </Button>
         </div>

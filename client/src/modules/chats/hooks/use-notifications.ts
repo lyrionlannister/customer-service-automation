@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient } from "../../common/hooks/use-api-client";
+import { authenticatedEventSourceUrl } from "../../common/utils/auth-header";
 
 export interface AppNotification {
   id: number;
@@ -34,7 +35,7 @@ export function useNotifications() {
 
   useEffect(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-    const eventSource = new EventSource(`${baseUrl}/whatsapp/events`);
+    const eventSource = new EventSource(authenticatedEventSourceUrl(`${baseUrl}/whatsapp/events`));
     eventSource.addEventListener("conversation_transferred", () => {
       fetchNotifications().catch(console.error);
     });

@@ -4,6 +4,7 @@ import type { ApexOptions } from "apexcharts";
 import { MessageSquare, CalendarDays, Clock, CalendarCheck2, TrendingUp } from "lucide-react";
 import Input from "@ui/inputs/input";
 import { useApiClient } from "../../common/hooks/use-api-client";
+import { authenticatedEventSourceUrl } from "../../common/utils/auth-header";
 import PageMeta from "@common/pages/page-meta";
 
 type Point = { bucket: string; count: number };
@@ -36,7 +37,8 @@ const DashboardPage: React.FC = () => {
   }, [loadStats]);
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/v1/whatsapp/events");
+    const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
+    const eventSource = new EventSource(authenticatedEventSourceUrl(`${baseUrl}/whatsapp/events`));
     const refresh = () => loadStats().catch(console.error);
     eventSource.addEventListener("message_received", refresh);
     eventSource.addEventListener("ready", refresh);
@@ -146,7 +148,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 md:gap-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
             <Clock className="size-6 text-violet-600 dark:text-violet-400" />
           </div>
@@ -160,7 +162,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
             <CalendarCheck2 className="size-6 text-emerald-600 dark:text-emerald-400" />
           </div>
@@ -174,7 +176,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 dark:bg-brand-900/30">
             <TrendingUp className="size-6 text-brand-600 dark:text-brand-400" />
           </div>
@@ -188,7 +190,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
             <MessageSquare className="size-6 text-blue-600 dark:text-blue-400" />
           </div>
@@ -202,7 +204,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
             <CalendarDays className="size-6 text-orange-500 dark:text-orange-400" />
           </div>
@@ -221,7 +223,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
           <div className="mb-1">
             <h3 className="text-lg font-semibold text-brand-600 dark:text-brand-400">
               Conversaciones por día
@@ -240,7 +242,7 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/3 sm:px-6 sm:pt-6">
           <div className="mb-1">
             <h3 className="text-lg font-semibold text-brand-600 dark:text-brand-400">
               Conversaciones por mes

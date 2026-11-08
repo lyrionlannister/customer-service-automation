@@ -3,7 +3,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-COPY package.json ./
+COPY package.json pnpm-workspace.yaml ./
 RUN pnpm install --cpu=x64 --os=linux
 COPY . .
 RUN pnpm run build

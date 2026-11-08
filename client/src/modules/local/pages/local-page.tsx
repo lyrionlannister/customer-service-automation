@@ -16,6 +16,7 @@ const LocalPage: React.FC = () => {
     address: "",
     phone: "",
     nextControlNumber: "1",
+    cashRoundingUnit: "0",
     logo: "",
   });
 
@@ -30,6 +31,7 @@ const LocalPage: React.FC = () => {
         address: local.address ?? "",
         phone: local.phone ?? "",
         nextControlNumber: String(local.nextControlNumber),
+        cashRoundingUnit: String(local.cashRoundingUnit ?? 0),
         logo: local.logo ?? "",
       });
     }
@@ -55,6 +57,7 @@ const LocalPage: React.FC = () => {
       address: form.address || undefined,
       phone: form.phone || undefined,
       nextControlNumber: parseInt(form.nextControlNumber, 10) || 1,
+      cashRoundingUnit: parseFloat(form.cashRoundingUnit) || 0,
       logo: form.logo || undefined,
     });
   };
@@ -87,7 +90,7 @@ const LocalPage: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03] space-y-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-6">
 
           {/* Logo */}
           <div>
@@ -186,8 +189,29 @@ const LocalPage: React.FC = () => {
             </p>
           </div>
 
+          <hr className="border-gray-100 dark:border-gray-800" />
+
+          {/* Redondeo de caja */}
+          <div className="max-w-xs">
+            <Label className="text-gray-500">Unidad de redondeo de caja (efectivo)</Label>
+            <Input
+              type="number"
+              name="cashRoundingUnit"
+              min="0"
+              step="0.01"
+              placeholder="0 = sin redondeo"
+              value={form.cashRoundingUnit}
+              onChange={handleChange}
+              disabled={saving}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Ej. 0.50 redondea cobros en efectivo al 50 centavos más cercano. 0 desactiva el redondeo.
+              Tarjeta y transferencia nunca redondean.
+            </p>
+          </div>
+
           <div className="flex justify-end">
-            <Button variant="primary" disabled={saving}>
+            <Button type="submit" variant="primary" disabled={saving}>
               {saving ? "Guardando..." : "Guardar cambios"}
             </Button>
           </div>

@@ -48,7 +48,7 @@ export const useMessageTemplates = () => {
         });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error((body as any).error ?? "Error al crear template");
+          throw new Error((body as { error?: string }).error ?? "Error al crear template");
         }
         const created: MessageTemplate = await res.json();
         setTemplates((prev) => [...prev, created].sort((a, b) => a.key.localeCompare(b.key)));

@@ -195,6 +195,25 @@ const AsideMenu: React.FC<{
     </ul>
   );
 
+  const groupItemsByRelation = (items: NavItem[], fallbackTitle: string) => {
+    const groups = new Map<string, NavItem[]>();
+
+    items.forEach((item) => {
+      const key = item.group || fallbackTitle;
+      const currentGroup = groups.get(key) ?? [];
+      currentGroup.push(item);
+      groups.set(key, currentGroup);
+    });
+
+    return Array.from(groups.entries()).map(([title, groupedItems]) => ({
+      title,
+      items: groupedItems,
+    }));
+  };
+
+  const mainGroups = groupItemsByRelation(navItems, "General");
+  const extraGroups = groupItemsByRelation(othersItems, "Otros");
+
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -236,9 +255,26 @@ const AsideMenu: React.FC<{
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              <div className="space-y-5">
+                {mainGroups.map(({ title, items }) => (
+                  <div key={title} className="space-y-3">
+                    {mainGroups.length > 1 && (
+                      <h3
+                        className={`flex text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400 ${
+                          !isExpanded && !isHovered
+                            ? "lg:justify-center"
+                            : "justify-start"
+                        }`}
+                      >
+                        {isExpanded || isHovered || isMobileOpen ? title : "•"}
+                      </h3>
+                    )}
+                    {renderMenuItems(items, "main")}
+                  </div>
+                ))}
+              </div>
             </div>
-            {othersItems && othersItems.length > 0 && (
+            {extraGroups.length > 0 && (
               <div className="">
                 <>
                   <h2
@@ -249,12 +285,29 @@ const AsideMenu: React.FC<{
                     }`}
                   >
                     {isExpanded || isHovered || isMobileOpen ? (
-                      "Others"
+                      "Otros"
                     ) : (
                       <HorizontaLDots />
                     )}
                   </h2>
-                  {renderMenuItems(othersItems, "others")}
+                  <div className="space-y-5">
+                    {extraGroups.map(({ title, items }) => (
+                      <div key={title} className="space-y-3">
+                        {extraGroups.length > 1 && (
+                          <h3
+                            className={`flex text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400 ${
+                              !isExpanded && !isHovered
+                                ? "lg:justify-center"
+                                : "justify-start"
+                            }`}
+                          >
+                            {isExpanded || isHovered || isMobileOpen ? title : "•"}
+                          </h3>
+                        )}
+                        {renderMenuItems(items, "others")}
+                      </div>
+                    ))}
+                  </div>
                 </>
               </div>
             )}
