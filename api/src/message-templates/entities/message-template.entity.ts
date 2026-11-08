@@ -1,17 +1,19 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Unique,
 } from "typeorm";
+import { BaseEntity } from "../../common/entities/base.entity.js";
 
 @Entity("message_templates")
-export class MessageTemplate {
-  @PrimaryGeneratedColumn("uuid", { name: "id_plantilla" })
-  id!: string;
+@Unique(["tenantId", "key"])
+export class MessageTemplate extends BaseEntity {
+  @Column({ type: "bigint", nullable: false, name: "tenant_id" })
+  tenantId!: string;
 
-  @Column({ type: "varchar", length: 100, unique: true, name: "clave" })
+  @Column({ type: "varchar", length: 100, name: "clave" })
   key!: string;
 
   @Column({ type: "text", nullable: false, name: "texto" })

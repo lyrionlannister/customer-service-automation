@@ -2,8 +2,10 @@ import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } fro
 
 @Entity("whatsapp_settings")
 export class WhatsappSettings {
-  @PrimaryColumn({ type: "int", name: "id_configuracion" })
-  id!: number;
+  // Una fila por tenant: el tenant ES la llave, no un id autoincremental
+  // global con un unico registro id=1 como antes.
+  @PrimaryColumn({ type: "bigint", name: "tenant_id" })
+  tenantId!: string;
 
   @Column({ type: "boolean", default: true, name: "respuestas_ia_habilitadas" })
   aiRepliesEnabled!: boolean;

@@ -8,6 +8,8 @@ import { ExcludedPhone } from "../whatsapp-admin/entities/excluded-phone.entity.
 import { WhatsappSettings } from "../whatsapp-admin/entities/whatsapp-settings.entity.js";
 import { ContactName } from "../chats/entities/contact-name.entity.js";
 import { humanModeService } from "../human-mode/human-mode.service.js";
+import { Tenant } from "../tenancy/entities/tenant.entity.js";
+import { allowSystemScope } from "../tenancy/tenant-context.js";
 
 const { Client, LocalAuth } = whatsappWeb;
 const authPath = process.env.WHATSAPP_AUTH_PATH ?? ".wwebjs_auth";
@@ -126,7 +128,22 @@ export class WhatsappListener {
   private lastQr: string | null = null;
   private qrExpiresAt: string | null = null;
   private subscribers = new Set<(event: ListenerEvent) => void>();
-  private static readonly SETTINGS_ID = 1;
+  // El listener de WhatsApp sigue siendo una sola sesion global del proceso
+  // (no una por tenant todavia -- ver nota en whatsapp-admin.routes.ts), asi
+  // que su propio ajuste de "respuestas con IA" se guarda contra el primer
+  // tenant que exista, no contra uno resuelto por request.
+  private defaultTenantIdPromise: Promise<string> | null = null;
+
+  private async getDefaultTenantId(): Promise<string> {
+    if (!this.defaultTenantIdPromise) {
+      this.defaultTenantIdPromise = allowSystemScope(async () => {
+        const [tenant] = await AppDataSource.getRepository(Tenant).find({ take: 1 });
+        if (!tenant) throw new Error("No hay ningun tenant creado todavia");
+        return tenant.id;
+      });
+    }
+    return this.defaultTenantIdPromise;
+  }
 
   private constructor(processor: WhatsappProcessor) {
     this.processor = processor;
@@ -375,17 +392,16 @@ export class WhatsappListener {
   }
 
   async getAiRepliesEnabled(): Promise<boolean> {
+    const tenantId = await this.getDefaultTenantId();
     const settingsRepository = AppDataSource.getRepository(WhatsappSettings);
-    const settings = await settingsRepository.findOneBy({
-      id: WhatsappListener.SETTINGS_ID,
-    });
+    const settings = await settingsRepository.findOneBy({ tenantId });
 
     if (settings) {
       return settings.aiRepliesEnabled;
     }
 
     const newSettings = settingsRepository.create({
-      id: WhatsappListener.SETTINGS_ID,
+      tenantId,
       aiRepliesEnabled: true,
     });
 
@@ -394,10 +410,11 @@ export class WhatsappListener {
   }
 
   async setAiRepliesEnabled(aiRepliesEnabled: boolean): Promise<boolean> {
+    const tenantId = await this.getDefaultTenantId();
     const settingsRepository = AppDataSource.getRepository(WhatsappSettings);
     const settings =
-      (await settingsRepository.findOneBy({ id: WhatsappListener.SETTINGS_ID })) ??
-      settingsRepository.create({ id: WhatsappListener.SETTINGS_ID });
+      (await settingsRepository.findOneBy({ tenantId })) ??
+      settingsRepository.create({ tenantId });
 
     settings.aiRepliesEnabled = aiRepliesEnabled;
     await settingsRepository.save(settings);

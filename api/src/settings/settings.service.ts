@@ -1,5 +1,6 @@
 import AppDataSource from "../config/data-source.js";
 import { WhatsappSettings } from "../whatsapp-admin/entities/whatsapp-settings.entity.js";
+import { getCurrentTenantId } from "../tenancy/tenant-context.js";
 
 type CacheEntry = {
   value: string;
@@ -8,12 +9,13 @@ type CacheEntry = {
 
 export class SettingsService {
   private static instance: SettingsService;
-  private static readonly SETTINGS_ID = 1;
   private static readonly CACHE_TTL_MS = Number(
     process.env.AUTOMATION_URL_CACHE_TTL_MS ?? 10_000,
   );
 
-  private automationUrlCache: CacheEntry | null = null;
+  // Cacheado por tenant: una sola instancia de SettingsService sirve a todos
+  // los tenants del proceso, asi que la cache no puede ser un solo valor.
+  private automationUrlCache = new Map<string, CacheEntry>();
 
   static getInstance(): SettingsService {
     if (!SettingsService.instance) {
@@ -30,13 +32,14 @@ export class SettingsService {
   }
 
   private async getSettingsRow(): Promise<WhatsappSettings> {
+    const tenantId = getCurrentTenantId();
     const repository = AppDataSource.getRepository(WhatsappSettings);
-    const existing = await repository.findOneBy({ id: SettingsService.SETTINGS_ID });
+    const existing = await repository.findOneBy({ tenantId });
 
     if (existing) return existing;
 
     const created = repository.create({
-      id: SettingsService.SETTINGS_ID,
+      tenantId,
       aiRepliesEnabled: true,
       automationUrl: null,
       n8nEditorUrl: null,
@@ -46,18 +49,20 @@ export class SettingsService {
   }
 
   async getAutomationUrl(): Promise<string> {
+    const tenantId = getCurrentTenantId();
     const now = Date.now();
-    if (this.automationUrlCache && this.automationUrlCache.expiresAt > now) {
-      return this.automationUrlCache.value;
+    const cached = this.automationUrlCache.get(tenantId);
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
     }
 
     const settings = await this.getSettingsRow();
     const value = settings.automationUrl?.trim() || this.getFallbackAutomationUrl();
 
-    this.automationUrlCache = {
+    this.automationUrlCache.set(tenantId, {
       value,
       expiresAt: now + SettingsService.CACHE_TTL_MS,
-    };
+    });
 
     return value;
   }
@@ -91,10 +96,10 @@ export class SettingsService {
     settings.automationUrl = url;
     await repository.save(settings);
 
-    this.automationUrlCache = {
+    this.automationUrlCache.set(settings.tenantId, {
       value: url,
       expiresAt: Date.now() + SettingsService.CACHE_TTL_MS,
-    };
+    });
 
     return url;
   }

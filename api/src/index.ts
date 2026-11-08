@@ -49,8 +49,50 @@ import { NotificationDao } from "./notifications/daos/notification.dao.js";
 import { NotificationService } from "./notifications/services/notification.service.js";
 import { NotificationController } from "./notifications/controllers/notification.controller.js";
 import { createNotificationRouter } from "./notifications/routes/notification.routes.js";
+import { RepairNoteItem } from "./repair-notes/entities/repair-note-item.entity.js";
+import { RepairNoteItemDao } from "./repair-notes/daos/repair-note-item.dao.js";
+import { InventoryItem } from "./inventory/entities/inventory-item.entity.js";
+import { InventoryMovement } from "./inventory/entities/inventory-movement.entity.js";
+import { InventoryItemDao } from "./inventory/daos/inventory-item.dao.js";
+import { InventoryMovementDao } from "./inventory/daos/inventory-movement.dao.js";
+import { InventoryService } from "./inventory/services/inventory.service.js";
+import { InventoryController } from "./inventory/controllers/inventory.controller.js";
+import { createInventoryRouter } from "./inventory/routes/inventory.routes.js";
+import { Sale } from "./inventory/entities/sale.entity.js";
+import { SaleItem } from "./inventory/entities/sale-item.entity.js";
+import { SaleDao } from "./inventory/daos/sale.dao.js";
+import { SaleItemDao } from "./inventory/daos/sale-item.dao.js";
+import { SaleService } from "./inventory/services/sale.service.js";
+import { SaleController } from "./inventory/controllers/sale.controller.js";
+import { createSaleRouter } from "./inventory/routes/sale.routes.js";
 import { createN8nPublicRouter } from "./n8n/n8n-public.routes.js";
+import { ImportStagingService } from "./import-staging/services/import-staging.service.js";
+import { ImportStagingController } from "./import-staging/controllers/import-staging.controller.js";
+import { createImportStagingRouter } from "./import-staging/routes/import-staging.routes.js";
+import { redisClient } from "./config/redis-client.js";
+import { PdfRendererService } from "./pdf/pdf-renderer.service.js";
+import { Quote } from "./quotes/entities/quote.entity.js";
+import { QuoteItem } from "./quotes/entities/quote-item.entity.js";
+import { QuoteDao } from "./quotes/daos/quote.dao.js";
+import { QuoteItemDao } from "./quotes/daos/quote-item.dao.js";
+import { QuoteService } from "./quotes/services/quote.service.js";
+import { QuoteController } from "./quotes/controllers/quote.controller.js";
+import { createQuoteRouter } from "./quotes/routes/quote.routes.js";
+import { CashSession } from "./cash/entities/cash-session.entity.js";
+import { CashMovement } from "./cash/entities/cash-movement.entity.js";
+import { CashSessionDao } from "./cash/daos/cash-session.dao.js";
+import { CashMovementDao } from "./cash/daos/cash-movement.dao.js";
+import { CashService } from "./cash/services/cash.service.js";
+import { CashController } from "./cash/controllers/cash.controller.js";
+import { createCashRouter } from "./cash/routes/cash.routes.js";
+import { RevenueAttributionSetting } from "./revenue-attribution/entities/revenue-attribution-setting.entity.js";
+import { RevenueAttributionSettingDao } from "./revenue-attribution/daos/revenue-attribution-setting.dao.js";
+import { RevenueAttributionService } from "./revenue-attribution/services/revenue-attribution.service.js";
+import { RevenueAttributionController } from "./revenue-attribution/controllers/revenue-attribution.controller.js";
+import { createRevenueAttributionRouter } from "./revenue-attribution/routes/revenue-attribution.routes.js";
 import { seedAdminUser } from "./seed/admin-seed.js";
+import { Tenant } from "./tenancy/entities/tenant.entity.js";
+import { allowSystemScope, runWithTenant } from "./tenancy/tenant-context.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -71,12 +113,13 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     console.log("Bases de datos conectadas exitosamente");
 
     const userRepository = AppDataSource.getRepository(User);
-    await seedAdminUser(userRepository);
+    const tenantRepository = AppDataSource.getRepository(Tenant);
+    await seedAdminUser(userRepository, tenantRepository);
 
     // Configurar servicios y controladores
     const exclusionsRepository = AppDataSource.getRepository(ExcludedPhone);
     const userDao = new UserDao(userRepository);
-    const authService = new AuthService(userDao);
+    const authService = new AuthService(userDao, tenantRepository);
     const authController = new AuthController(authService);
 
     const chatHistoryRepository = CustomerServiceDataSource.getRepository(ChatHistory);
@@ -90,10 +133,56 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const localService = new LocalService(localDao);
     const localController = new LocalController(localService);
 
+    const inventoryItemRepository = AppDataSource.getRepository(InventoryItem);
+    const inventoryMovementRepository = AppDataSource.getRepository(InventoryMovement);
+    const inventoryItemDao = new InventoryItemDao(inventoryItemRepository);
+    const inventoryMovementDao = new InventoryMovementDao(inventoryMovementRepository);
+    const inventoryService = new InventoryService(inventoryItemDao, inventoryMovementDao);
+    const inventoryController = new InventoryController(inventoryService);
+
+    const saleRepository = AppDataSource.getRepository(Sale);
+    const saleItemRepository = AppDataSource.getRepository(SaleItem);
+    const saleDao = new SaleDao(saleRepository);
+    const saleItemDao = new SaleItemDao(saleItemRepository);
+    const saleService = new SaleService(saleDao, saleItemDao, inventoryService);
+    const saleController = new SaleController(saleService);
+
     const repairNoteRepository = AppDataSource.getRepository(RepairNote);
+    const repairNoteItemRepository = AppDataSource.getRepository(RepairNoteItem);
     const repairNoteDao = new RepairNoteDao(repairNoteRepository);
-    const repairNoteService = new RepairNoteService(repairNoteDao, localService);
-    const repairNoteController = new RepairNoteController(repairNoteService);
+    const repairNoteItemDao = new RepairNoteItemDao(repairNoteItemRepository);
+    const repairNoteService = new RepairNoteService(
+      repairNoteDao,
+      localService,
+      repairNoteItemDao,
+      inventoryService,
+    );
+    const pdfRendererService = new PdfRendererService();
+    const repairNoteController = new RepairNoteController(
+      repairNoteService,
+      localService,
+      pdfRendererService,
+      authService,
+    );
+
+    const quoteRepository = AppDataSource.getRepository(Quote);
+    const quoteItemRepository = AppDataSource.getRepository(QuoteItem);
+    const quoteDao = new QuoteDao(quoteRepository);
+    const quoteItemDao = new QuoteItemDao(quoteItemRepository);
+    const quoteService = new QuoteService(quoteDao, quoteItemDao);
+    const quoteController = new QuoteController(quoteService, localService, pdfRendererService);
+
+    const cashSessionRepository = AppDataSource.getRepository(CashSession);
+    const cashMovementRepository = AppDataSource.getRepository(CashMovement);
+    const cashSessionDao = new CashSessionDao(cashSessionRepository);
+    const cashMovementDao = new CashMovementDao(cashMovementRepository);
+    const cashService = new CashService(cashSessionDao, cashMovementDao, localService);
+    const cashController = new CashController(cashService);
+
+    const revenueAttributionRepository = AppDataSource.getRepository(RevenueAttributionSetting);
+    const revenueAttributionDao = new RevenueAttributionSettingDao(revenueAttributionRepository);
+    const revenueAttributionService = new RevenueAttributionService(revenueAttributionDao);
+    const revenueAttributionController = new RevenueAttributionController(revenueAttributionService);
 
     const messageTemplateRepository = AppDataSource.getRepository(MessageTemplate);
     const messageTemplateDao = new MessageTemplateDao(messageTemplateRepository);
@@ -103,20 +192,33 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const supplierRepository = AppDataSource.getRepository(Supplier);
     const supplierDao = new SupplierDao(supplierRepository);
     const supplierService = new SupplierService(supplierDao);
-    await supplierService.seed();
     const supplierController = new SupplierController(supplierService);
 
     const priceListRepository = AppDataSource.getRepository(PriceListItem);
     const priceListDao = new PriceListDao(priceListRepository);
     const priceListService = new PriceListService(priceListDao);
-    const priceListController = new PriceListController(priceListService, supplierService);
+    const priceListController = new PriceListController(priceListService);
+
+    const importStagingService = new ImportStagingService(redisClient, priceListDao);
+    const importStagingController = new ImportStagingController(importStagingService);
 
     const notificationRepository = AppDataSource.getRepository(Notification);
     const notificationDao = new NotificationDao(notificationRepository);
     const notificationService = new NotificationService(notificationDao);
     const notificationController = new NotificationController(notificationService);
 
-    await messageTemplateService.seed();
+    // Seed de defaults (proveedores, plantillas) por cada tenant existente.
+    // Idempotente: "seed" de cada servicio ya revisa si el dato existe antes
+    // de crearlo. Un tenant creado via /register se sembrara en el proximo
+    // arranque del servidor, no al instante -- simplificacion aceptada por
+    // ahora, no es una garantia de aislamiento, solo de datos default.
+    const allTenants = await allowSystemScope(() => tenantRepository.find());
+    for (const tenant of allTenants) {
+      await runWithTenant(tenant.id, async () => {
+        await supplierService.seed();
+        await messageTemplateService.seed();
+      });
+    }
 
     // Rutas
     app.use("/api/v1/auth", createAuthRouter(authController));
@@ -129,7 +231,13 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     app.use("/api/v1/message-templates", createMessageTemplateRouter(messageTemplateController));
     app.use("/api/v1/suppliers", createSupplierRouter(supplierController));
     app.use("/api/v1/price-list", createPriceListRouter(priceListController));
+    app.use("/api/v1/import-staging", createImportStagingRouter(importStagingController));
     app.use("/api/v1/notifications", createNotificationRouter(notificationController));
+    app.use("/api/v1/inventory", createInventoryRouter(inventoryController));
+    app.use("/api/v1/sales", createSaleRouter(saleController));
+    app.use("/api/v1/quotes", createQuoteRouter(quoteController));
+    app.use("/api/v1/cash", createCashRouter(cashController));
+    app.use("/api/v1/settings", createRevenueAttributionRouter(revenueAttributionController));
     app.use("/api/v1/n8n", createN8nPublicRouter(messageTemplateDao, priceListDao, repairNoteDao));
 
     app.get("/", (_req, res) => {

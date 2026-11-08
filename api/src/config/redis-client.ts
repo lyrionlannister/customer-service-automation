@@ -6,6 +6,8 @@ const redisPort = parseInt(process.env.REDIS_PORT ?? "6379", 10);
 export const redisClient = new Redis({
   host: redisHost,
   port: redisPort,
+  username: process.env.REDIS_USER,
+  password: process.env.REDIS_PASSWORD,
   lazyConnect: true,
 });
 

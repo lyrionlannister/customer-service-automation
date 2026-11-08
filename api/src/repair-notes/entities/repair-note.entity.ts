@@ -1,15 +1,17 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Unique,
 } from "typeorm";
+import { BaseEntity } from "../../common/entities/base.entity.js";
 
 @Entity("repair_notes")
-export class RepairNote {
-  @PrimaryGeneratedColumn("uuid", { name: "id_nota_reparacion" })
-  id!: string;
+@Unique(["tenantId", "controlNumber"])
+export class RepairNote extends BaseEntity {
+  @Column({ type: "bigint", nullable: false, name: "tenant_id" })
+  tenantId!: string;
 
   @Column({ type: "int", name: "numero_control" })
   controlNumber!: number;
@@ -50,8 +52,8 @@ export class RepairNote {
   @Column({ type: "text", nullable: true, name: "notas_tecnico" })
   technicianNotes?: string;
 
-  @Column({ type: "varchar", length: 255, nullable: true, name: "nombre_tecnico" })
-  technicianName?: string;
+  @Column({ type: "bigint", nullable: true, name: "id_empleado_asignado" })
+  assignedEmployeeId?: string | null;
 
   @Column({ type: "boolean", default: false, name: "servicio_reparacion" })
   serviceRepair!: boolean;

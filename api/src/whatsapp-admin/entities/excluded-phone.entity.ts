@@ -2,6 +2,11 @@ import { CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from "typeo
 
 @Entity("excluded_phone")
 export class ExcludedPhone {
+  // PK compuesta: dos tenants pueden excluir el mismo numero de forma
+  // independiente.
+  @PrimaryColumn({ type: "bigint", name: "tenant_id" })
+  tenantId!: string;
+
   @PrimaryColumn({ type: "varchar", length: 64, name: "telefono" })
   phone!: string;
 

@@ -1,17 +1,17 @@
 import { Repository } from "typeorm";
 import { RepairNote } from "../entities/repair-note.entity.js";
-import { BaseDao } from "../../daos/base.dao.js";
+import { TenantScopedDao } from "../../daos/tenant-scoped.dao.js";
 
-export class RepairNoteDao extends BaseDao<RepairNote> {
+export class RepairNoteDao extends TenantScopedDao<RepairNote> {
   constructor(repository: Repository<RepairNote>) {
     super(repository);
   }
 
   async findAllOrdered(): Promise<RepairNote[]> {
-    return this.repository.find({ order: { controlNumber: "DESC" } });
+    return this.scoped().orderBy("entity.controlNumber", "DESC").getMany();
   }
 
   async findByControlNumber(controlNumber: number): Promise<RepairNote | null> {
-    return this.repository.findOneBy({ controlNumber });
+    return this.scoped().andWhere("entity.controlNumber = :controlNumber", { controlNumber }).getOne();
   }
 }

@@ -1,16 +1,16 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
 } from "typeorm";
+import { BaseEntity } from "../../common/entities/base.entity.js";
 
 export type NotificationType = "conversation_transferred" | "new_human_message";
 
 @Entity("notifications")
-export class Notification {
-  @PrimaryGeneratedColumn({ name: "id_notificacion" })
-  id!: number;
+export class Notification extends BaseEntity {
+  @Column({ type: "bigint", nullable: false, name: "tenant_id" })
+  tenantId!: string;
 
   @Column({ type: "varchar", length: 50, name: "tipo" })
   type!: NotificationType;

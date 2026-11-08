@@ -1,15 +1,15 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { BaseEntity } from "../../common/entities/base.entity.js";
 
 @Entity("proveedores")
-export class Supplier {
-  @PrimaryGeneratedColumn("uuid", { name: "id_proveedor" })
-  id!: string;
+export class Supplier extends BaseEntity {
+  @Column({ type: "bigint", nullable: false, name: "tenant_id" })
+  tenantId!: string;
 
   @Column({ type: "varchar", length: 255, nullable: false, name: "nombre" })
   name!: string;

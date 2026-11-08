@@ -1,8 +1,13 @@
 import { hash } from "bcryptjs";
 import { Repository } from "typeorm";
 import { User } from "../auth/entities/user.entity.js";
+import { Tenant } from "../tenancy/entities/tenant.entity.js";
+import { allowSystemScope, runWithTenant } from "../tenancy/tenant-context.js";
 
-export async function seedAdminUser(userRepository: Repository<User>): Promise<void> {
+export async function seedAdminUser(
+  userRepository: Repository<User>,
+  tenantRepository: Repository<Tenant>,
+): Promise<void> {
   const count = await userRepository.count();
   if (count > 0) return;
 
@@ -16,11 +21,24 @@ export async function seedAdminUser(userRepository: Repository<User>): Promise<v
     return;
   }
 
-  const hashedPassword = await hash(password, 10);
-
-  await userRepository.save(
-    userRepository.create({ firstName, lastName, email, password: hashedPassword }),
+  const tenant = await allowSystemScope(() =>
+    tenantRepository.save(tenantRepository.create({ name: `${firstName} ${lastName}` })),
   );
+
+  await runWithTenant(tenant.id, async () => {
+    const hashedPassword = await hash(password, 10);
+
+    await userRepository.save(
+      userRepository.create({
+        tenantId: tenant.id,
+        role: "owner",
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+      }),
+    );
+  });
 
   console.log(`Usuario administrador creado: ${email}`);
 }
