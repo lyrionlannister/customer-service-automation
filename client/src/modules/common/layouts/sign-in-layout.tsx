@@ -5,6 +5,7 @@ import useSidebar from "../hooks/use-sidebar";
 import AsideMenu from "../components/menu/aside-menu";
 import NavbarMenu from "../components/menu/navbar-menu";
 import SidebarProvider from "../contexts/providers/sidebar-provider";
+import BranchProvider from "../contexts/providers/branch-provider";
 import signInNavbarItems, {
   otherSignInItems,
 } from "../../../config/app/navbar/sign-in-navbar-items";
@@ -40,7 +41,9 @@ const LayoutContent: React.FC = () => {
 const SignInLayout: React.FC = () => {
   return (
     <SidebarProvider>
-      <LayoutContent />
+      <BranchProvider>
+        <LayoutContent />
+      </BranchProvider>
     </SidebarProvider>
   );
 };

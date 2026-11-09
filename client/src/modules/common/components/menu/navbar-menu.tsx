@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import useSidebar from "../../hooks/use-sidebar";
+import useBranch from "../../hooks/use-branch";
 import UserDropdown from "./user-dropdown";
 import ThemeToggleButton from "./theme-toggle-button";
 
@@ -8,6 +9,7 @@ const NavbarMenu: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { branches, activeBranchId, setActiveBranchId } = useBranch();
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -105,6 +107,25 @@ const NavbarMenu: React.FC = () => {
             isApplicationMenuOpen ? "flex" : "hidden"
           } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
+          <div className="hidden items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/60 dark:text-gray-300 lg:flex">
+            <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+            {branches.length > 1 ? (
+              <select
+                value={activeBranchId}
+                onChange={(e) => setActiveBranchId(e.target.value)}
+                className="bg-transparent text-sm text-gray-600 focus:outline-none dark:text-gray-300"
+                aria-label="Sucursal activa"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span>{branches[0]?.name ?? "Sucursal principal"}</span>
+            )}
+          </div>
           <div className="flex items-center gap-2 2xsm:gap-3">
             <ThemeToggleButton />
           </div>

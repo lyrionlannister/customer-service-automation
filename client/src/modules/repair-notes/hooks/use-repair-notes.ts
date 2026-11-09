@@ -27,7 +27,10 @@ const toPayload = (form: RepairNoteFormData) => ({
   deliveryDate: form.deliveryDate || undefined,
   contactNumber: form.contactNumber || undefined,
   technicianNotes: form.technicianNotes || undefined,
-  technicianName: form.technicianName || undefined,
+  additionalFindings: form.additionalFindings || undefined,
+  assignedEmployeeId: form.assignedEmployeeId || undefined,
+  localId: form.localId || undefined,
+  customerId: form.customerId || undefined,
 });
 
 export const useRepairNotes = () => {
@@ -142,6 +145,42 @@ export const useRepairNotes = () => {
     [apiClient],
   );
 
+  const fetchNoteServiceTypeIds = useCallback(
+    async (id: string): Promise<string[]> => {
+      try {
+        const response = await apiClient(`/repair-notes/${id}/service-types`, { headers: getAuthHeader() });
+        if (!response.ok) return [];
+        return (await response.json()) as string[];
+      } catch {
+        return [];
+      }
+    },
+    [apiClient],
+  );
+
+  const cancelNote = useCallback(
+    async (id: string): Promise<RepairNoteRecord | null> => {
+      setError(null);
+      try {
+        const response = await apiClient(`/repair-notes/${id}/cancel`, {
+          method: "POST",
+          headers: getAuthHeader(),
+        });
+        if (!response.ok) {
+          const data = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(data?.error || "Error al cancelar nota");
+        }
+        const updated = (await response.json()) as RepairNoteRecord;
+        setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
+        return updated;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        return null;
+      }
+    },
+    [apiClient],
+  );
+
   const deleteNote = useCallback(
     async (id: string): Promise<boolean> => {
       try {
@@ -169,8 +208,10 @@ export const useRepairNotes = () => {
     fetchNotes,
     fetchNote,
     fetchNoteItems,
+    fetchNoteServiceTypeIds,
     createNote,
     updateNote,
+    cancelNote,
     deleteNote,
     clearError: () => setError(null),
   };

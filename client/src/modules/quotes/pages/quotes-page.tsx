@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Plus, FileText, Pencil, Trash2, Check, X, Search } from "lucide-react";
 import { useQuotes, type QuoteStatus } from "../hooks/use-quotes";
+import { useQuotesPage } from "../hooks/use-quotes-page";
 import Button from "@ui/button/button";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@ui/table/table";
-import PageMeta from "@common/pages/page-meta";
+import PageShell from "@common/components/page-shell/page-shell";
 
 const STATUS_CONFIG: Record<QuoteStatus, { label: string; className: string }> = {
   pending: { label: "Pendiente", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
@@ -24,37 +25,18 @@ const formatCurrency = (value: number) =>
 const QuotesPage: React.FC = () => {
   const navigate = useNavigate();
   const { quotes, loading, error, fetchQuotes, deleteQuote, setStatus } = useQuotes();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<QuoteStatus | "all">("all");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { search, setSearch, statusFilter, setStatusFilter, deletingId, filteredQuotes, handleDelete, handleStatusChange } =
+    useQuotesPage({ quotes, deleteQuote, setStatus });
 
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes]);
 
-  const filtered = quotes.filter((q) => {
-    const matchesSearch = q.customerName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || q.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar esta cotización?")) return;
-    setDeletingId(id);
-    await deleteQuote(id);
-    setDeletingId(null);
-  };
-
   return (
-    <div className="space-y-6">
-      <PageMeta title="Cotizaciones" description="Cotizaciones a clientes" />
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">Cotizaciones</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Genera y da seguimiento a cotizaciones para clientes.
-          </p>
-        </div>
+    <PageShell
+      title="Cotizaciones"
+      description="Genera y da seguimiento a cotizaciones para clientes."
+      action={
         <Button
           variant="primary"
           startIcon={<Plus className="size-4" />}
@@ -62,8 +44,8 @@ const QuotesPage: React.FC = () => {
         >
           Nueva cotización
         </Button>
-      </div>
-
+      }
+    >
       {error && <div className="text-sm text-red-500">{error}</div>}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -92,7 +74,7 @@ const QuotesPage: React.FC = () => {
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/3">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">Cargando cotizaciones...</div>
-        ) : filtered.length === 0 ? (
+        ) : filteredQuotes.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
             {quotes.length === 0 ? "No hay cotizaciones registradas." : "Sin resultados para la búsqueda."}
           </div>
@@ -113,7 +95,7 @@ const QuotesPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((quote) => {
+                {filteredQuotes.map((quote) => {
                   const status = STATUS_CONFIG[quote.status];
                   return (
                     <TableRow
@@ -141,14 +123,14 @@ const QuotesPage: React.FC = () => {
                             <>
                               <button
                                 title="Aceptar"
-                                onClick={() => setStatus(quote.id, "accepted")}
+                                onClick={() => handleStatusChange(quote.id, "accepted")}
                                 className="rounded-lg p-1.5 text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20"
                               >
                                 <Check className="size-4" />
                               </button>
                               <button
                                 title="Rechazar"
-                                onClick={() => setStatus(quote.id, "rejected")}
+                                onClick={() => handleStatusChange(quote.id, "rejected")}
                                 className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                               >
                                 <X className="size-4" />
@@ -187,7 +169,7 @@ const QuotesPage: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };
 

@@ -146,7 +146,15 @@ export const useCash = () => {
   const registerMovement = useCallback(
     async (
       sessionId: string,
-      data: { type: CashMovementType; method: CashMovementMethod; amount: number; note?: string; createdByEmployeeId: string },
+      data: {
+        type: CashMovementType;
+        method: CashMovementMethod;
+        amount: number;
+        note?: string;
+        createdByEmployeeId: string;
+        relatedEntityType?: "repair_note" | "quote" | "sale" | "manual";
+        relatedEntityId?: string;
+      },
     ): Promise<boolean> => {
       setSaving(true);
       setError(null);

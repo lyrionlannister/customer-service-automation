@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Download, ArrowLeft } from "lucide-react";
 import { useRepairNotes } from "../hooks/use-repair-notes";
+import { useEmployees } from "@modules/users/hooks/use-employees";
+import { useServiceTypes } from "@common/hooks/use-service-types";
 import { useLocal } from "../../local/hooks/use-local";
 import { useApiClient } from "@common/hooks/use-api-client";
 import type { RepairNoteRecord } from "../types/repair-note.types";
@@ -136,6 +138,34 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
   note,
   local,
 }) => {
+  const { employees, fetchAll } = useEmployees();
+  const { serviceTypes, fetchAll: fetchServiceTypes } = useServiceTypes();
+  const { fetchNoteServiceTypeIds } = useRepairNotes();
+  const [resolvedTechnicianName, setResolvedTechnicianName] = useState<string | null>(null);
+  const [serviceTypeNames, setServiceTypeNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchAll();
+    fetchServiceTypes();
+  }, [fetchAll, fetchServiceTypes]);
+
+  useEffect(() => {
+    fetchNoteServiceTypeIds(note.id).then((ids) => {
+      const nameById = new Map(serviceTypes.map((t) => [t.id, t.name]));
+      setServiceTypeNames(ids.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n)));
+    });
+  }, [note.id, serviceTypes, fetchNoteServiceTypeIds]);
+
+  useEffect(() => {
+    if (!note.assignedEmployeeId) {
+      setResolvedTechnicianName(null);
+      return;
+    }
+
+    const match = employees.find((employee) => employee.id === note.assignedEmployeeId);
+    setResolvedTechnicianName(match ? `${match.firstName} ${match.lastName}`.trim() : null);
+  }, [employees, note.assignedEmployeeId]);
+
   const received = fmtDate(note.receivedAt);
   const delivery = fmtDate(note.deliveryDate ?? undefined);
 
@@ -323,6 +353,9 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
           <Field label="Modelo" value={note.model} flex />
         </div>
         <Field label="Falla Reportada" value={note.reportedFailure} flex />
+        {note.additionalFindings && (
+          <Field label="Hallazgos Adicionales" value={note.additionalFindings} flex />
+        )}
       </div>
 
       {/* Service type */}
@@ -331,11 +364,9 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
         <div
           style={{ display: "flex", flexWrap: "wrap", gap: "7px 22px", marginBottom: 8 }}
         >
-          <Check checked={note.serviceRepair} label="Reparación" />
-          <Check checked={note.serviceMaintenance} label="Mantenimiento" />
-          <Check checked={note.serviceDiagnostic} label="Diagnóstico" />
-          <Check checked={note.serviceRevision} label="Revisión" />
-          <Check checked={note.serviceWaterDamage} label="Mojado" />
+          {serviceTypeNames.map((name) => (
+            <Check key={name} checked label={name} />
+          ))}
           <Check checked={note.deviceOff} label="Equipo Apagado" />
         </div>
         <div
@@ -353,13 +384,13 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
       </div>
 
       {/* Technician notes */}
-      {(note.technicianName || note.technicianNotes) && (
+      {(resolvedTechnicianName || note.technicianNotes) && (
         <>
           <SectionLabel>Observaciones del Técnico</SectionLabel>
           <div style={{ padding: "10px 18px", borderBottom: "1px solid #f3f4f6" }}>
-            {note.technicianName && (
+            {resolvedTechnicianName && (
               <div style={{ marginBottom: 6 }}>
-                <Field label="Técnico" value={note.technicianName} flex />
+                <Field label="Técnico" value={resolvedTechnicianName} flex />
               </div>
             )}
             {note.technicianNotes && (

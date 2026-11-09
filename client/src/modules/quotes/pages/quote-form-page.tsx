@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useQuotes, type QuoteFormData, type QuoteItemInput } from "../hooks/use-quotes";
 import { useInventory } from "@modules/inventory/hooks/use-inventory";
-import { useLocal } from "@modules/local/hooks/use-local";
+import useBranch from "@common/hooks/use-branch";
 import EmployeeSelect from "@common/components/employee-select";
+import CustomerSelect from "@common/components/customer-select";
 import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
@@ -17,6 +18,7 @@ const emptyItemLine: ItemLine = { inventoryItemId: "", description: "", quantity
 
 const INITIAL_FORM: QuoteFormData = {
   localId: "",
+  customerId: "",
   customerName: "",
   contactNumber: "",
   validUntil: "",
@@ -31,15 +33,14 @@ const QuoteFormPage: React.FC = () => {
   const { quote, loading, saving, error, fetchQuote, fetchQuoteItems, createQuote, updateQuote, clearError } =
     useQuotes();
   const { items: inventoryItems, fetchAll: fetchInventory } = useInventory();
-  const { local, fetchLocal } = useLocal();
+  const { activeBranchId } = useBranch();
 
   const [form, setForm] = useState<QuoteFormData>(INITIAL_FORM);
   const [itemLines, setItemLines] = useState<ItemLine[]>([{ ...emptyItemLine }]);
 
   useEffect(() => {
     fetchInventory();
-    fetchLocal();
-  }, [fetchInventory, fetchLocal]);
+  }, [fetchInventory]);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -61,6 +62,7 @@ const QuoteFormPage: React.FC = () => {
     if (quote && isEdit) {
       setForm({
         localId: quote.localId,
+        customerId: quote.customerId ?? "",
         customerName: quote.customerName,
         contactNumber: quote.contactNumber ?? "",
         validUntil: quote.validUntil ?? "",
@@ -70,10 +72,10 @@ const QuoteFormPage: React.FC = () => {
   }, [quote, isEdit]);
 
   useEffect(() => {
-    if (!isEdit && local && !form.localId) {
-      setForm((prev) => ({ ...prev, localId: local.id }));
+    if (!isEdit && activeBranchId && !form.localId) {
+      setForm((prev) => ({ ...prev, localId: activeBranchId }));
     }
-  }, [isEdit, local, form.localId]);
+  }, [isEdit, activeBranchId, form.localId]);
 
   const set = (field: keyof QuoteFormData, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -144,6 +146,21 @@ const QuoteFormPage: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 space-y-4">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Datos del cliente</p>
+          <div>
+            <Label className="text-gray-500">Cliente existente</Label>
+            <CustomerSelect
+              value={form.customerId}
+              onChange={(customerId, customer) =>
+                setForm((prev) => ({
+                  ...prev,
+                  customerId,
+                  customerName: customer ? customer.name : prev.customerName,
+                  contactNumber: customer ? customer.phone : prev.contactNumber,
+                }))
+              }
+              disabled={saving}
+            />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label className="text-gray-500">

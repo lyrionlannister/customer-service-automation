@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, ShoppingCart } from "lucide-react";
 import { useSales, type PaymentMethod } from "../hooks/use-sales";
 import { useInventory } from "../hooks/use-inventory";
-import { useLocal } from "@modules/local/hooks/use-local";
+import useBranch from "@common/hooks/use-branch";
 import EmployeeSelect from "@common/components/employee-select";
 import Button from "@ui/button/button";
 import Input from "@ui/inputs/input";
@@ -26,7 +26,7 @@ const formatMoney = (v: number) => `$${Number(v).toLocaleString("es-MX", { minim
 const QuickSalePage: React.FC = () => {
   const { creating, error, create } = useSales();
   const { items: inventoryItems, fetchAll: fetchInventory } = useInventory();
-  const { local, fetchLocal } = useLocal();
+  const { activeBranchId } = useBranch();
 
   const [customerName, setCustomerName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
@@ -36,8 +36,7 @@ const QuickSalePage: React.FC = () => {
 
   useEffect(() => {
     fetchInventory();
-    fetchLocal();
-  }, [fetchInventory, fetchLocal]);
+  }, [fetchInventory]);
 
   const updateLine = (index: number, patch: Partial<LineItem>) => {
     setLines((prev) => prev.map((line, i) => (i === index ? { ...line, ...patch } : line)));
@@ -65,12 +64,12 @@ const QuickSalePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!local) return;
+    if (!activeBranchId) return;
     const validLines = lines.filter((l) => l.inventoryItemId && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
 
     const sale = await create({
-      localId: local.id,
+      localId: activeBranchId,
       customerName: customerName || undefined,
       paymentMethod,
       createdByEmployeeId: createdByEmployeeId || undefined,

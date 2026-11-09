@@ -6,6 +6,7 @@ export type QuoteStatus = "pending" | "accepted" | "rejected";
 export interface QuoteRecord {
   id: string;
   localId: string;
+  customerId: string | null;
   customerName: string;
   contactNumber: string | null;
   totalValue: number;
@@ -29,6 +30,7 @@ export interface QuoteItemRecord extends QuoteItemInput {
 
 export interface QuoteFormData {
   localId: string;
+  customerId: string;
   customerName: string;
   contactNumber: string;
   validUntil: string;
@@ -37,6 +39,7 @@ export interface QuoteFormData {
 
 const toPayload = (form: QuoteFormData) => ({
   localId: form.localId,
+  customerId: form.customerId || undefined,
   customerName: form.customerName,
   contactNumber: form.contactNumber || undefined,
   validUntil: form.validUntil || undefined,
