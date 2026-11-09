@@ -1,15 +1,27 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { BaseEntity } from "../../common/entities/base.entity.js";
+
+export type UserRole = "owner" | "admin" | "employee";
+export type PayCycle = "weekly" | "biweekly" | "monthly";
 
 @Entity("usuarios")
-export class User {
-  @PrimaryGeneratedColumn("uuid", { name: "id_usuario" })
-  id!: string;
+export class User extends BaseEntity {
+  @Column({ type: "bigint", nullable: false, name: "tenant_id" })
+  tenantId!: string;
+
+  @Column({ type: "varchar", length: 20, default: "owner", name: "rol" })
+  role!: UserRole;
+
+  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true, name: "salario" })
+  salaryAmount!: number | null;
+
+  @Column({ type: "varchar", length: 20, nullable: true, name: "ciclo_pago" })
+  payCycle!: PayCycle | null;
 
   @Column({ type: "varchar", length: 100, nullable: false, name: "nombre" })
   firstName!: string;

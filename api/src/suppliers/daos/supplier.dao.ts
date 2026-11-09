@@ -1,27 +1,21 @@
 import { Repository } from "typeorm";
 import { Supplier } from "../entities/supplier.entity.js";
+import { TenantScopedDao } from "../../daos/tenant-scoped.dao.js";
 
-export class SupplierDao {
-  constructor(private repository: Repository<Supplier>) {}
-
-  async findAll(): Promise<Supplier[]> {
-    return this.repository.find({ order: { name: "ASC" } });
+export class SupplierDao extends TenantScopedDao<Supplier> {
+  constructor(repository: Repository<Supplier>) {
+    super(repository);
   }
 
-  async findById(id: string): Promise<Supplier | null> {
-    return this.repository.findOneBy({ id });
-  }
-
-  async create(data: Partial<Supplier>): Promise<Supplier> {
-    const entity = this.repository.create(data);
-    return this.repository.save(entity);
+  override async findAll(): Promise<Supplier[]> {
+    return this.scoped().orderBy("entity.name", "ASC").getMany();
   }
 
   async findByName(name: string): Promise<Supplier | null> {
-    return this.repository.findOneBy({ name });
+    return this.findOne({ name } as Partial<Supplier>);
   }
 
   async count(): Promise<number> {
-    return this.repository.count();
+    return this.scoped().getCount();
   }
 }

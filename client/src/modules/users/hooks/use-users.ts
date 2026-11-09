@@ -1,11 +1,17 @@
 import { useState, useCallback } from "react";
 import { useApiClient } from "../../common/hooks/use-api-client";
 
+export type UserRole = "owner" | "admin" | "employee";
+export type PayCycle = "weekly" | "biweekly" | "monthly";
+
 export interface UserRecord {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
+  role: UserRole;
+  salaryAmount: number | null;
+  payCycle: PayCycle | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -16,12 +22,10 @@ interface CreateUserPayload {
   lastName: string;
   email: string;
   password: string;
+  role: UserRole;
+  salaryAmount?: number;
+  payCycle?: PayCycle;
 }
-
-const getAuthHeader = (): Record<string, string> => {
-  const token = sessionStorage.getItem("accessToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
 export const useUsers = () => {
   const { apiClient } = useApiClient();
@@ -37,9 +41,7 @@ export const useUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient("/auth/users", {
-        headers: { ...getAuthHeader() },
-      });
+      const response = await apiClient("/auth/users");
       if (!response.ok) {
         const data = await response.json().catch(() => ({})) as { error?: string };
         throw new Error(data?.error || "Error al obtener usuarios");
@@ -53,17 +55,17 @@ export const useUsers = () => {
     }
   }, [apiClient]);
 
+  // Crea un empleado dentro del tenant actual -- a diferencia de
+  // /auth/register (que crea un tenant nuevo cada vez), este endpoint
+  // requiere sesion y nunca aisla al usuario creado en otra empresa.
   const createUser = useCallback(async (payload: CreateUserPayload): Promise<UserRecord | null> => {
     setCreating(true);
     setCreateError(null);
     setCreateSuccess(false);
     try {
-      const response = await apiClient("/auth/register", {
+      const response = await apiClient("/auth/employees", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeader(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
@@ -86,7 +88,6 @@ export const useUsers = () => {
     try {
       const response = await apiClient(`/auth/users/${id}/toggle-status`, {
         method: "PATCH",
-        headers: { ...getAuthHeader() },
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({})) as { error?: string };

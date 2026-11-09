@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useApiClient } from "@common/hooks/use-api-client";
+import { authenticatedEventSourceUrl } from "@common/utils/auth-header";
 import type { QrResponse, WhatsappSettings, WhatsappStatus } from "../types/whatsapp.types";
 import { getWhatsappStatus } from "../services/whatsapp.service";
 
@@ -24,7 +25,7 @@ export const useWhatsappEvents = (callbacks: EventCallbacks) => {
       .catch((error) => console.error("Error cargando estado de WhatsApp", error));
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-    const eventSource = new EventSource(`${baseUrl}/whatsapp/events`);
+    const eventSource = new EventSource(authenticatedEventSourceUrl(`${baseUrl}/whatsapp/events`));
 
     eventSource.addEventListener("state_change", (event) => {
       const payload = JSON.parse(event.data) as { status?: WhatsappStatus; state?: string };

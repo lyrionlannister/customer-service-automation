@@ -7,6 +7,16 @@ const getAuthHeader = (): Record<string, string> => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+export interface RepairNoteItemInput {
+  inventoryItemId: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface RepairNoteItemRecord extends RepairNoteItemInput {
+  id: string;
+}
+
 const toPayload = (form: RepairNoteFormData) => ({
   ...form,
   totalValue: parseFloat(form.totalValue) || 0,
@@ -17,7 +27,10 @@ const toPayload = (form: RepairNoteFormData) => ({
   deliveryDate: form.deliveryDate || undefined,
   contactNumber: form.contactNumber || undefined,
   technicianNotes: form.technicianNotes || undefined,
-  technicianName: form.technicianName || undefined,
+  additionalFindings: form.additionalFindings || undefined,
+  assignedEmployeeId: form.assignedEmployeeId || undefined,
+  localId: form.localId || undefined,
+  customerId: form.customerId || undefined,
 });
 
 export const useRepairNotes = () => {
@@ -66,14 +79,14 @@ export const useRepairNotes = () => {
   );
 
   const createNote = useCallback(
-    async (form: RepairNoteFormData): Promise<RepairNoteRecord | null> => {
+    async (form: RepairNoteFormData, items?: RepairNoteItemInput[]): Promise<RepairNoteRecord | null> => {
       setSaving(true);
       setError(null);
       try {
         const response = await apiClient("/repair-notes", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...getAuthHeader() },
-          body: JSON.stringify(toPayload(form)),
+          body: JSON.stringify({ ...toPayload(form), items }),
         });
         if (!response.ok) {
           const data = (await response.json().catch(() => ({}))) as { error?: string };
@@ -91,14 +104,18 @@ export const useRepairNotes = () => {
   );
 
   const updateNote = useCallback(
-    async (id: string, form: RepairNoteFormData): Promise<RepairNoteRecord | null> => {
+    async (
+      id: string,
+      form: RepairNoteFormData,
+      items?: RepairNoteItemInput[],
+    ): Promise<RepairNoteRecord | null> => {
       setSaving(true);
       setError(null);
       try {
         const response = await apiClient(`/repair-notes/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...getAuthHeader() },
-          body: JSON.stringify(toPayload(form)),
+          body: JSON.stringify(items !== undefined ? { ...toPayload(form), items } : toPayload(form)),
         });
         if (!response.ok) {
           const data = (await response.json().catch(() => ({}))) as { error?: string };
@@ -110,6 +127,55 @@ export const useRepairNotes = () => {
         return null;
       } finally {
         setSaving(false);
+      }
+    },
+    [apiClient],
+  );
+
+  const fetchNoteItems = useCallback(
+    async (id: string): Promise<RepairNoteItemRecord[]> => {
+      try {
+        const response = await apiClient(`/repair-notes/${id}/items`, { headers: getAuthHeader() });
+        if (!response.ok) return [];
+        return (await response.json()) as RepairNoteItemRecord[];
+      } catch {
+        return [];
+      }
+    },
+    [apiClient],
+  );
+
+  const fetchNoteServiceTypeIds = useCallback(
+    async (id: string): Promise<string[]> => {
+      try {
+        const response = await apiClient(`/repair-notes/${id}/service-types`, { headers: getAuthHeader() });
+        if (!response.ok) return [];
+        return (await response.json()) as string[];
+      } catch {
+        return [];
+      }
+    },
+    [apiClient],
+  );
+
+  const cancelNote = useCallback(
+    async (id: string): Promise<RepairNoteRecord | null> => {
+      setError(null);
+      try {
+        const response = await apiClient(`/repair-notes/${id}/cancel`, {
+          method: "POST",
+          headers: getAuthHeader(),
+        });
+        if (!response.ok) {
+          const data = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(data?.error || "Error al cancelar nota");
+        }
+        const updated = (await response.json()) as RepairNoteRecord;
+        setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
+        return updated;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        return null;
       }
     },
     [apiClient],
@@ -141,8 +207,11 @@ export const useRepairNotes = () => {
     error,
     fetchNotes,
     fetchNote,
+    fetchNoteItems,
+    fetchNoteServiceTypeIds,
     createNote,
     updateNote,
+    cancelNote,
     deleteNote,
     clearError: () => setError(null),
   };

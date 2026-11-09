@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { UserPlus } from "lucide-react";
-import { useUsers } from "../hooks/use-users";
+import { useUsers, type PayCycle, type UserRole } from "../hooks/use-users";
+import { useUsersPage } from "../hooks/use-users-page";
 import Toggle from "@ui/toggle/toggle";
 import Modal from "@ui/modal/modal";
 import Input from "@ui/inputs/input";
 import Label from "@ui/inputs/label";
 import Button from "@ui/button/button";
 import Alert from "@ui/alert/alert";
+import Select from "@ui/select/select";
 import {
   Table,
   TableHeader,
@@ -15,20 +17,19 @@ import {
   TableCell,
 } from "@ui/table/table";
 import { EyeIcon, EyeCloseIcon } from "@common/icons";
-import PageMeta from "@common/pages/page-meta";
+import PageShell from "@common/components/page-shell/page-shell";
 
-interface FormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}
 
-const INITIAL_FORM: FormData = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  password: "",
+const ROLE_LABELS: Record<UserRole, string> = {
+  owner: "Dueño",
+  admin: "Administrador",
+  employee: "Empleado",
+};
+
+const PAY_CYCLE_LABELS: Record<PayCycle, string> = {
+  weekly: "Semanal",
+  biweekly: "Quincenal",
+  monthly: "Mensual",
 };
 
 const formatDate = (dateStr: string) => {
@@ -55,54 +56,36 @@ const UsersPage: React.FC = () => {
     togglingId,
   } = useUsers();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
-  const [showPassword, setShowPassword] = useState(false);
+  const {
+    isModalOpen,
+    formData,
+    showPassword,
+    setIsModalOpen,
+    setShowPassword,
+    updateField,
+    submit,
+    closeModal,
+  } = useUsersPage({
+    createUser,
+    fetchUsers,
+    clearCreateError,
+    clearCreateSuccess,
+  });
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearCreateError();
-    clearCreateSuccess();
-    const result = await createUser(formData);
-    if (result) {
-      setFormData(INITIAL_FORM);
-      fetchUsers();
-      setTimeout(() => {
-        setIsModalOpen(false);
-        clearCreateSuccess();
-      }, 1500);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setFormData(INITIAL_FORM);
-    setShowPassword(false);
-    clearCreateError();
-    clearCreateSuccess();
+    await submit();
   };
 
   return (
-    <div className="space-y-6">
-      <PageMeta title="Usuarios" description="Gestión de usuarios" />
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-brand-600 dark:text-brand-400">
-            Usuarios
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Gestiona los usuarios del sistema.
-          </p>
-        </div>
+    <PageShell
+      title="Usuarios"
+      description="Gestiona los usuarios del sistema."
+      action={
         <Button
           variant="primary"
           startIcon={<UserPlus className="size-4" />}
@@ -110,18 +93,26 @@ const UsersPage: React.FC = () => {
         >
           Nuevo usuario
         </Button>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      }
+    >
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-900">
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            Cargando usuarios...
+          <div className="flex flex-col items-center justify-center gap-4 p-10 text-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando usuarios...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-sm text-red-500">{error}</div>
+          <div className="flex flex-col items-center justify-center gap-4 p-10 text-center">
+            <p className="text-sm text-red-500">{error}</p>
+            <Button variant="secondary" onClick={fetchUsers}>Reintentar</Button>
+          </div>
         ) : users.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            No hay usuarios registrados.
+          <div className="flex flex-col items-center justify-center gap-4 p-10 text-center">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-200">No hay usuarios registrados.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Crea el primer usuario para comenzar.</p>
+            <Button variant="primary" startIcon={<UserPlus className="size-4" />} onClick={() => setIsModalOpen(true)}>
+              Nuevo usuario
+            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -130,25 +121,31 @@ const UsersPage: React.FC = () => {
                 <TableRow className="border-b border-gray-200 dark:border-gray-800">
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                    className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400"
                   >
                     Nombre
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                    className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400"
                   >
                     Email
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                    className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400"
+                  >
+                    Rol
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400"
                   >
                     Creado
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                    className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400"
                   >
                     Estado
                   </TableCell>
@@ -158,13 +155,16 @@ const UsersPage: React.FC = () => {
                 {users.map((user) => (
                   <TableRow
                     key={user.id}
-                    className="border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800/50 dark:hover:bg-white/[0.02]"
+                    className="border-b border-gray-100 transition-colors last:border-0 hover:bg-gray-50 dark:border-gray-800/50 dark:hover:bg-white/2"
                   >
                     <TableCell className="px-6 py-4 text-sm font-medium text-gray-800 dark:text-white/90">
                       {user.firstName} {user.lastName}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {user.email}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {ROLE_LABELS[user.role]}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {formatDate(user.createdAt)}
@@ -186,7 +186,7 @@ const UsersPage: React.FC = () => {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        onClose={closeModal}
         className="max-w-md p-6 sm:p-8"
       >
         <div className="mb-6">
@@ -224,7 +224,7 @@ const UsersPage: React.FC = () => {
                 placeholder="Nombre"
                 name="firstName"
                 value={formData.firstName}
-                onChange={handleChange}
+                onChange={(event) => updateField("firstName", event.target.value)}
                 disabled={creating}
               />
             </div>
@@ -236,7 +236,7 @@ const UsersPage: React.FC = () => {
                 placeholder="Apellido"
                 name="lastName"
                 value={formData.lastName}
-                onChange={handleChange}
+                onChange={(event) => updateField("lastName", event.target.value)}
                 disabled={creating}
               />
             </div>
@@ -249,7 +249,7 @@ const UsersPage: React.FC = () => {
                 placeholder="correo@ejemplo.com"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(event) => updateField("email", event.target.value)}
                 disabled={creating}
               />
             </div>
@@ -263,7 +263,7 @@ const UsersPage: React.FC = () => {
                   placeholder="Mínimo 8 caracteres"
                   name="password"
                   value={formData.password}
-                  onChange={handleChange}
+                  onChange={(event) => updateField("password", event.target.value)}
                   disabled={creating}
                 />
                 <span
@@ -278,13 +278,45 @@ const UsersPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <Button variant="primary" className="w-full" disabled={creating}>
+            <div>
+              <Label className="text-gray-500">Rol</Label>
+              <Select
+                value={formData.role}
+                onChange={(value) => updateField("role", value as UserRole)}
+                disabled={creating}
+                options={Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            <div>
+              <Label className="text-gray-500">Salario</Label>
+              <Input
+                type="number"
+                placeholder="Ej. 4500"
+                name="salaryAmount"
+                value={formData.salaryAmount}
+                onChange={(event) => updateField("salaryAmount", event.target.value)}
+                disabled={creating}
+              />
+            </div>
+            <div>
+              <Label className="text-gray-500">Ciclo de pago</Label>
+              <Select
+                value={formData.payCycle}
+                onChange={(value) =>
+                  updateField("payCycle", value as PayCycle | "")
+                }
+                disabled={creating}
+                placeholder="Sin ciclo de pago"
+                options={Object.entries(PAY_CYCLE_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+            <Button type="submit" variant="primary" className="w-full" disabled={creating}>
               {creating ? "Creando..." : "Crear usuario"}
             </Button>
           </div>
         </form>
       </Modal>
-    </div>
+    </PageShell>
   );
 };
 

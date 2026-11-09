@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { authHeader } from "../utils/auth-header";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -20,7 +21,10 @@ export const useApiClient = () => {
       }
 
       const url = `${API_BASE_URL}${endpoint}`;
-      return sendRequest(url, options);
+      // El token (si hay sesion) siempre viaja — register/login todavia no
+      // tienen uno, authHeader() devuelve {} y no rompe nada.
+      const headers = { ...authHeader(), ...options.headers };
+      return sendRequest(url, { ...options, headers });
     },
     [],
   );

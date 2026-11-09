@@ -3,11 +3,20 @@ import { listener } from "../whatsapp/whatsapp-service.js";
 import type { Repository } from "typeorm";
 import { ExcludedPhone } from "./entities/excluded-phone.entity.js";
 import { normalizeWhatsappPhone } from "./utils/phone-normalizer.js";
+import { authMiddleware, type AuthenticatedRequest } from "../auth/middlewares/auth.middleware.js";
+import { tenantMiddleware } from "../tenancy/tenant.middleware.js";
 
 export function createWhatsappAdminRouter(
   exclusionsRepository: Repository<ExcludedPhone>,
 ): Router {
   const router = Router();
+  router.use(authMiddleware, tenantMiddleware);
+
+  // NOTA: el WhatsappListener (QR, status, logout, toggle de IA) sigue
+  // siendo una sola sesion global del proceso, no una por tenant todavia
+  // -- eso es un cambio de arquitectura aparte (pool de sesiones/Chromium
+  // por tenant), fuera del alcance de este modulo. Las exclusiones si son
+  // por tenant desde ahora.
 
   router.get("/status", (_req, res) => {
     res.status(200).json({ status: listener.getStatus() });
@@ -59,14 +68,15 @@ export function createWhatsappAdminRouter(
     res.status(200).json({ aiRepliesEnabled: updatedValue });
   });
 
-  router.get("/exclusions", async (_req, res) => {
+  router.get("/exclusions", async (req: AuthenticatedRequest, res) => {
     const exclusions = await exclusionsRepository.find({
+      where: { tenantId: req.user!.tenantId },
       order: { createdAt: "DESC" },
     });
     res.status(200).json(exclusions);
   });
 
-  router.post("/exclusions", async (req, res) => {
+  router.post("/exclusions", async (req: AuthenticatedRequest, res) => {
     const normalizedPhone = normalizeWhatsappPhone(req.body?.phone ?? "");
 
     if (!normalizedPhone) {
@@ -74,21 +84,24 @@ export function createWhatsappAdminRouter(
       return;
     }
 
-    const exclusion = exclusionsRepository.create({ phone: normalizedPhone });
+    const exclusion = exclusionsRepository.create({
+      tenantId: req.user!.tenantId,
+      phone: normalizedPhone,
+    });
     await exclusionsRepository.save(exclusion);
 
     res.status(201).json(exclusion);
   });
 
-  router.delete("/exclusions/:phone", async (req, res) => {
-    const normalizedPhone = normalizeWhatsappPhone(req.params.phone);
+  router.delete("/exclusions/:phone", async (req: AuthenticatedRequest, res) => {
+    const normalizedPhone = normalizeWhatsappPhone(String(req.params.phone));
 
     if (!normalizedPhone) {
       res.status(400).json({ error: "Teléfono inválido" });
       return;
     }
 
-    await exclusionsRepository.delete({ phone: normalizedPhone });
+    await exclusionsRepository.delete({ tenantId: req.user!.tenantId, phone: normalizedPhone });
 
     res.status(204).send();
   });

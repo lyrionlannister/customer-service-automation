@@ -1,8 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Printer, ArrowLeft } from "lucide-react";
+import { Download, ArrowLeft } from "lucide-react";
 import { useRepairNotes } from "../hooks/use-repair-notes";
+import { useEmployees } from "@modules/users/hooks/use-employees";
+import { useServiceTypes } from "@common/hooks/use-service-types";
 import { useLocal } from "../../local/hooks/use-local";
+import { useApiClient } from "@common/hooks/use-api-client";
 import type { RepairNoteRecord } from "../types/repair-note.types";
 import type { LocalRecord } from "../../local/hooks/use-local";
 import PageMeta from "@common/pages/page-meta";
@@ -135,6 +138,34 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
   note,
   local,
 }) => {
+  const { employees, fetchAll } = useEmployees();
+  const { serviceTypes, fetchAll: fetchServiceTypes } = useServiceTypes();
+  const { fetchNoteServiceTypeIds } = useRepairNotes();
+  const [resolvedTechnicianName, setResolvedTechnicianName] = useState<string | null>(null);
+  const [serviceTypeNames, setServiceTypeNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchAll();
+    fetchServiceTypes();
+  }, [fetchAll, fetchServiceTypes]);
+
+  useEffect(() => {
+    fetchNoteServiceTypeIds(note.id).then((ids) => {
+      const nameById = new Map(serviceTypes.map((t) => [t.id, t.name]));
+      setServiceTypeNames(ids.map((id) => nameById.get(id)).filter((n): n is string => Boolean(n)));
+    });
+  }, [note.id, serviceTypes, fetchNoteServiceTypeIds]);
+
+  useEffect(() => {
+    if (!note.assignedEmployeeId) {
+      setResolvedTechnicianName(null);
+      return;
+    }
+
+    const match = employees.find((employee) => employee.id === note.assignedEmployeeId);
+    setResolvedTechnicianName(match ? `${match.firstName} ${match.lastName}`.trim() : null);
+  }, [employees, note.assignedEmployeeId]);
+
   const received = fmtDate(note.receivedAt);
   const delivery = fmtDate(note.deliveryDate ?? undefined);
 
@@ -322,6 +353,9 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
           <Field label="Modelo" value={note.model} flex />
         </div>
         <Field label="Falla Reportada" value={note.reportedFailure} flex />
+        {note.additionalFindings && (
+          <Field label="Hallazgos Adicionales" value={note.additionalFindings} flex />
+        )}
       </div>
 
       {/* Service type */}
@@ -330,11 +364,9 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
         <div
           style={{ display: "flex", flexWrap: "wrap", gap: "7px 22px", marginBottom: 8 }}
         >
-          <Check checked={note.serviceRepair} label="Reparación" />
-          <Check checked={note.serviceMaintenance} label="Mantenimiento" />
-          <Check checked={note.serviceDiagnostic} label="Diagnóstico" />
-          <Check checked={note.serviceRevision} label="Revisión" />
-          <Check checked={note.serviceWaterDamage} label="Mojado" />
+          {serviceTypeNames.map((name) => (
+            <Check key={name} checked label={name} />
+          ))}
           <Check checked={note.deviceOff} label="Equipo Apagado" />
         </div>
         <div
@@ -352,13 +384,13 @@ const Receipt: React.FC<{ note: RepairNoteRecord; local: LocalRecord | null }> =
       </div>
 
       {/* Technician notes */}
-      {(note.technicianName || note.technicianNotes) && (
+      {(resolvedTechnicianName || note.technicianNotes) && (
         <>
           <SectionLabel>Observaciones del Técnico</SectionLabel>
           <div style={{ padding: "10px 18px", borderBottom: "1px solid #f3f4f6" }}>
-            {note.technicianName && (
+            {resolvedTechnicianName && (
               <div style={{ marginBottom: 6 }}>
-                <Field label="Técnico" value={note.technicianName} flex />
+                <Field label="Técnico" value={resolvedTechnicianName} flex />
               </div>
             )}
             {note.technicianNotes && (
@@ -483,11 +515,35 @@ const RepairNotePrintPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { note, loading: loadingNote, fetchNote } = useRepairNotes();
   const { local, loading: loadingLocal, fetchLocal } = useLocal();
+  const { apiClient } = useApiClient();
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) fetchNote(id);
     fetchLocal();
   }, [id, fetchNote, fetchLocal]);
+
+  const handleDownload = async () => {
+    if (!id || !note) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const res = await apiClient(`/repair-notes/${id}/pdf`);
+      if (!res.ok) throw new Error("No se pudo generar el PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `nota-${note.controlNumber}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loadingNote || loadingLocal) {
     return (
@@ -501,20 +557,10 @@ const RepairNotePrintPage: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <PageMeta title="Imprimir Nota" description="Vista de impresión" />
-      <style>{`
-        @page { margin: 0; }
-        @media print {
-          .no-print { display: none !important; }
-          aside, header { display: none !important; }
-          body { background: white !important; margin: 0; }
-          .print-wrapper { padding: 10mm; box-sizing: border-box; width: 100%; }
-          .receipt-root { box-shadow: none !important; border-radius: 0 !important; }
-        }
-      `}</style>
+      <PageMeta title="Nota de Reparación" description="Vista previa e impresión" />
 
       {/* Controls */}
-      <div className="no-print mb-4 flex shrink-0 items-center gap-3">
+      <div className="mb-4 flex shrink-0 items-center gap-3">
         <button
           onClick={() => navigate("/admin/repair-notes")}
           className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
@@ -522,27 +568,24 @@ const RepairNotePrintPage: React.FC = () => {
           <ArrowLeft className="size-5" />
         </button>
         <h1 className="flex-1 text-xl font-semibold text-brand-600 dark:text-brand-400">
-          Vista de impresión — Nota #{note.controlNumber}
+          Nota #{note.controlNumber}
         </h1>
+        {downloadError && <span className="text-sm text-red-500">{downloadError}</span>}
         <button
-          onClick={() => window.print()}
-          className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
         >
-          <Printer className="size-4" />
-          Imprimir
+          <Download className="size-4" />
+          {downloading ? "Generando..." : "Descargar PDF"}
         </button>
       </div>
 
-      {/* Preview — fills remaining height */}
-      <div className="no-print flex min-h-0 flex-1 items-start justify-center overflow-auto rounded-2xl border border-gray-200 bg-gray-100 p-8 dark:border-gray-700 dark:bg-gray-900">
+      {/* Preview */}
+      <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto rounded-2xl border border-gray-200 bg-gray-100 p-8 dark:border-gray-700 dark:bg-gray-900">
         <div style={{ width: 720, flexShrink: 0 }}>
           <Receipt note={note} local={local} />
         </div>
-      </div>
-
-      {/* DOM para impresión */}
-      <div className="print-wrapper hidden print:block">
-        <Receipt note={note} local={local} />
       </div>
     </div>
   );

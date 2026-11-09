@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { settingsService } from "../settings/settings.service.js";
+import { authMiddleware } from "../auth/middlewares/auth.middleware.js";
+import { tenantMiddleware } from "../tenancy/tenant.middleware.js";
 
 function validateAbsoluteUrl(url: string): URL | null {
   try {
@@ -28,6 +30,7 @@ function isAllowedByEnvironment(url: URL): boolean {
 
 export function createN8nIntegrationRouter(): Router {
   const router = Router();
+  router.use(authMiddleware, tenantMiddleware);
 
   router.get("/", async (_req, res) => {
     const config = await settingsService.getN8nIntegrationConfig();

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient } from "../../common/hooks/use-api-client";
+import { authenticatedEventSourceUrl } from "../../common/utils/auth-header";
 
 export interface Conversation {
   sessionId: string;
@@ -41,7 +42,7 @@ export function useConversations() {
 
   useEffect(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL as string;
-    const eventSource = new EventSource(`${baseUrl}/whatsapp/events`);
+    const eventSource = new EventSource(authenticatedEventSourceUrl(`${baseUrl}/whatsapp/events`));
     const refresh = () => {
       fetchConversations().catch(console.error);
     };

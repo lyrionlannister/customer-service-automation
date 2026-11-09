@@ -1,4 +1,4 @@
-export type RepairNoteStatus = "received" | "in_repair" | "done" | "delivered";
+export type RepairNoteStatus = "received" | "in_repair" | "done" | "delivered" | "cancelled";
 
 export interface RepairNoteRecord {
   id: string;
@@ -15,12 +15,10 @@ export interface RepairNoteRecord {
   receivedAt: string;
   deliveryDate?: string;
   technicianNotes?: string;
-  technicianName?: string;
-  serviceRepair: boolean;
-  serviceMaintenance: boolean;
-  serviceDiagnostic: boolean;
-  serviceRevision: boolean;
-  serviceWaterDamage: boolean;
+  additionalFindings?: string;
+  assignedEmployeeId?: string | null;
+  localId?: string | null;
+  customerId?: string | null;
   deviceOff: boolean;
   hasWarranty: boolean;
   hasExtendedWarranty: boolean;
@@ -42,12 +40,11 @@ export interface RepairNoteFormData {
   receivedAt: string;
   deliveryDate: string;
   technicianNotes: string;
-  technicianName: string;
-  serviceRepair: boolean;
-  serviceMaintenance: boolean;
-  serviceDiagnostic: boolean;
-  serviceRevision: boolean;
-  serviceWaterDamage: boolean;
+  additionalFindings: string;
+  assignedEmployeeId: string;
+  localId: string;
+  customerId: string;
+  serviceTypeIds: string[];
   deviceOff: boolean;
   hasWarranty: boolean;
   hasExtendedWarranty: boolean;
@@ -67,12 +64,11 @@ export const INITIAL_FORM: RepairNoteFormData = {
   receivedAt: new Date().toISOString().split("T")[0],
   deliveryDate: "",
   technicianNotes: "",
-  technicianName: "",
-  serviceRepair: false,
-  serviceMaintenance: false,
-  serviceDiagnostic: false,
-  serviceRevision: false,
-  serviceWaterDamage: false,
+  additionalFindings: "",
+  assignedEmployeeId: "",
+  localId: "",
+  customerId: "",
+  serviceTypeIds: [],
   deviceOff: false,
   hasWarranty: false,
   hasExtendedWarranty: false,
@@ -95,5 +91,9 @@ export const STATUS_CONFIG: Record<RepairNoteStatus, { label: string; className:
   delivered: {
     label: "Entregado",
     className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  },
+  cancelled: {
+    label: "Cancelado",
+    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   },
 };

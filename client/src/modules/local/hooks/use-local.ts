@@ -8,6 +8,7 @@ export interface LocalRecord {
   phone?: string;
   logo?: string;
   nextControlNumber: number;
+  cashRoundingUnit: number;
   updatedAt: string;
 }
 

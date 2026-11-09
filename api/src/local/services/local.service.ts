@@ -1,5 +1,6 @@
 import { LocalDao } from "../daos/local.dao.js";
 import { Local } from "../entities/local.entity.js";
+import { rasterizeLogoIfSvg } from "../../common/utils/rasterize-logo.js";
 
 export class LocalService {
   constructor(private localDao: LocalDao) {}
@@ -10,7 +11,8 @@ export class LocalService {
 
   async updateConfig(data: Partial<Local>): Promise<Local> {
     const local = await this.localDao.findOrCreate();
-    return (await this.localDao.update(local.id, data)) as Local;
+    const payload = data.logo ? { ...data, logo: await rasterizeLogoIfSvg(data.logo) } : data;
+    return (await this.localDao.update(local.id, payload)) as Local;
   }
 
   async consumeControlNumber(): Promise<number> {

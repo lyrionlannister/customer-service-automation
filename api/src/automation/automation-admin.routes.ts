@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { settingsService } from "../settings/settings.service.js";
+import { authMiddleware } from "../auth/middlewares/auth.middleware.js";
+import { tenantMiddleware } from "../tenancy/tenant.middleware.js";
 
 const allowedDomains = (process.env.AUTOMATION_ALLOWED_DOMAINS ?? "")
   .split(",")
@@ -27,6 +29,7 @@ function isAllowedDomain(hostname: string): boolean {
 
 export function createAutomationAdminRouter(): Router {
   const router = Router();
+  router.use(authMiddleware, tenantMiddleware);
 
   router.get("/config", async (_req, res) => {
     const config = await settingsService.getAutomationConfig();

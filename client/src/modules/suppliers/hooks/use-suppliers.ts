@@ -18,6 +18,7 @@ export const useSuppliers = () => {
   const { apiClient } = useApiClient();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
@@ -34,5 +35,78 @@ export const useSuppliers = () => {
     }
   }, [apiClient]);
 
-  return { suppliers, loading, error, fetchAll };
+  const create = useCallback(
+    async (data: Pick<Supplier, "name" | "phone">): Promise<boolean> => {
+      setSaving(true);
+      setError(null);
+      try {
+        const res = await apiClient("/suppliers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error((body as { error?: string }).error ?? "Error al crear proveedor");
+        }
+        const created: Supplier = await res.json();
+        setSuppliers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [apiClient],
+  );
+
+  const update = useCallback(
+    async (id: string, data: Pick<Supplier, "name" | "phone">): Promise<boolean> => {
+      setSaving(true);
+      setError(null);
+      try {
+        const res = await apiClient(`/suppliers/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error((body as { error?: string }).error ?? "Error al actualizar proveedor");
+        }
+        const updated: Supplier = await res.json();
+        setSuppliers((prev) => prev.map((supplier) => (supplier.id === id ? updated : supplier)));
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [apiClient],
+  );
+
+  const remove = useCallback(
+    async (id: string): Promise<boolean> => {
+      setError(null);
+      try {
+        const res = await apiClient(`/suppliers/${id}`, {
+          method: "DELETE",
+          headers: authHeader(),
+        });
+        if (!res.ok) throw new Error("Error al eliminar proveedor");
+        setSuppliers((prev) => prev.filter((supplier) => supplier.id !== id));
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+        return false;
+      }
+    },
+    [apiClient],
+  );
+
+  return { suppliers, loading, saving, error, fetchAll, create, update, remove };
 };

@@ -12,4 +12,55 @@ export class SupplierController {
       res.status(500).json({ error: error.message });
     }
   };
+
+  getById = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params["id"] as string;
+      const supplier = await this.service.getById(id);
+      if (!supplier) {
+        res.status(404).json({ error: "Proveedor no encontrado" });
+        return;
+      }
+      res.status(200).json(supplier);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+  create = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const supplier = await this.service.create(req.body);
+      res.status(201).json(supplier);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  };
+
+  update = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params["id"] as string;
+      const supplier = await this.service.update(id, req.body);
+      if (!supplier) {
+        res.status(404).json({ error: "Proveedor no encontrado" });
+        return;
+      }
+      res.status(200).json(supplier);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  };
+
+  delete = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params["id"] as string;
+      const deleted = await this.service.delete(id);
+      if (!deleted) {
+        res.status(404).json({ error: "Proveedor no encontrado" });
+        return;
+      }
+      res.status(200).json({ message: "Proveedor eliminado" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  };
 }
