@@ -11,6 +11,9 @@ export class Quote extends BaseEntity {
   @Column({ type: "bigint", nullable: false, name: "local_id" })
   localId!: string;
 
+  @Column({ type: "bigint", nullable: true, name: "customer_id" })
+  customerId?: string | null;
+
   @Column({ type: "varchar", length: 255, nullable: false, name: "nombre_cliente" })
   customerName!: string;
 

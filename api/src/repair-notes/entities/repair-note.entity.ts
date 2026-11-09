@@ -13,6 +13,12 @@ export class RepairNote extends BaseEntity {
   @Column({ type: "bigint", nullable: false, name: "tenant_id" })
   tenantId!: string;
 
+  @Column({ type: "bigint", nullable: true, name: "local_id" })
+  localId?: string | null;
+
+  @Column({ type: "bigint", nullable: true, name: "customer_id" })
+  customerId?: string | null;
+
   @Column({ type: "int", name: "numero_control" })
   controlNumber!: number;
 
@@ -52,23 +58,11 @@ export class RepairNote extends BaseEntity {
   @Column({ type: "text", nullable: true, name: "notas_tecnico" })
   technicianNotes?: string;
 
+  @Column({ type: "text", nullable: true, name: "hallazgos_adicionales" })
+  additionalFindings?: string;
+
   @Column({ type: "bigint", nullable: true, name: "id_empleado_asignado" })
   assignedEmployeeId?: string | null;
-
-  @Column({ type: "boolean", default: false, name: "servicio_reparacion" })
-  serviceRepair!: boolean;
-
-  @Column({ type: "boolean", default: false, name: "servicio_mantenimiento" })
-  serviceMaintenance!: boolean;
-
-  @Column({ type: "boolean", default: false, name: "servicio_diagnostico" })
-  serviceDiagnostic!: boolean;
-
-  @Column({ type: "boolean", default: false, name: "servicio_revision" })
-  serviceRevision!: boolean;
-
-  @Column({ type: "boolean", default: false, name: "servicio_dano_agua" })
-  serviceWaterDamage!: boolean;
 
   @Column({ type: "boolean", default: false, name: "dispositivo_apagado" })
   deviceOff!: boolean;

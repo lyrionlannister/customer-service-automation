@@ -51,6 +51,13 @@ import { NotificationController } from "./notifications/controllers/notification
 import { createNotificationRouter } from "./notifications/routes/notification.routes.js";
 import { RepairNoteItem } from "./repair-notes/entities/repair-note-item.entity.js";
 import { RepairNoteItemDao } from "./repair-notes/daos/repair-note-item.dao.js";
+import { RepairNoteServiceType } from "./repair-notes/entities/repair-note-service-type.entity.js";
+import { RepairNoteServiceTypeDao } from "./repair-notes/daos/repair-note-service-type.dao.js";
+import { ServiceType } from "./service-types/entities/service-type.entity.js";
+import { ServiceTypeDao } from "./service-types/daos/service-type.dao.js";
+import { ServiceTypeService } from "./service-types/services/service-type.service.js";
+import { ServiceTypeController } from "./service-types/controllers/service-type.controller.js";
+import { createServiceTypeRouter } from "./service-types/routes/service-type.routes.js";
 import { InventoryItem } from "./inventory/entities/inventory-item.entity.js";
 import { InventoryMovement } from "./inventory/entities/inventory-movement.entity.js";
 import { InventoryItemDao } from "./inventory/daos/inventory-item.dao.js";
@@ -90,6 +97,19 @@ import { RevenueAttributionSettingDao } from "./revenue-attribution/daos/revenue
 import { RevenueAttributionService } from "./revenue-attribution/services/revenue-attribution.service.js";
 import { RevenueAttributionController } from "./revenue-attribution/controllers/revenue-attribution.controller.js";
 import { createRevenueAttributionRouter } from "./revenue-attribution/routes/revenue-attribution.routes.js";
+import { ReportsService } from "./reports/services/reports.service.js";
+import { ReportsController } from "./reports/controllers/reports.controller.js";
+import { createReportsRouter } from "./reports/routes/reports.routes.js";
+import { Branch } from "./branches/entities/branch.entity.js";
+import { BranchDao } from "./branches/daos/branch.dao.js";
+import { BranchService } from "./branches/services/branch.service.js";
+import { BranchController } from "./branches/controllers/branch.controller.js";
+import { createBranchRouter } from "./branches/routes/branch.routes.js";
+import { Customer } from "./customers/entities/customer.entity.js";
+import { CustomerDao } from "./customers/daos/customer.dao.js";
+import { CustomerService } from "./customers/services/customer.service.js";
+import { CustomerController } from "./customers/controllers/customer.controller.js";
+import { createCustomerRouter } from "./customers/routes/customer.routes.js";
 import { seedAdminUser } from "./seed/admin-seed.js";
 import { Tenant } from "./tenancy/entities/tenant.entity.js";
 import { allowSystemScope, runWithTenant } from "./tenancy/tenant-context.js";
@@ -147,15 +167,24 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const saleService = new SaleService(saleDao, saleItemDao, inventoryService);
     const saleController = new SaleController(saleService);
 
+    const serviceTypeRepository = AppDataSource.getRepository(ServiceType);
+    const serviceTypeDao = new ServiceTypeDao(serviceTypeRepository);
+    const serviceTypeService = new ServiceTypeService(serviceTypeDao);
+    const serviceTypeController = new ServiceTypeController(serviceTypeService);
+
     const repairNoteRepository = AppDataSource.getRepository(RepairNote);
     const repairNoteItemRepository = AppDataSource.getRepository(RepairNoteItem);
+    const repairNoteServiceTypeRepository = AppDataSource.getRepository(RepairNoteServiceType);
     const repairNoteDao = new RepairNoteDao(repairNoteRepository);
     const repairNoteItemDao = new RepairNoteItemDao(repairNoteItemRepository);
+    const repairNoteServiceTypeDao = new RepairNoteServiceTypeDao(repairNoteServiceTypeRepository);
     const repairNoteService = new RepairNoteService(
       repairNoteDao,
       localService,
       repairNoteItemDao,
       inventoryService,
+      repairNoteServiceTypeDao,
+      serviceTypeDao,
     );
     const pdfRendererService = new PdfRendererService();
     const repairNoteController = new RepairNoteController(
@@ -184,6 +213,19 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const revenueAttributionService = new RevenueAttributionService(revenueAttributionDao);
     const revenueAttributionController = new RevenueAttributionController(revenueAttributionService);
 
+    const reportsService = new ReportsService(
+      repairNoteDao,
+      repairNoteItemDao,
+      saleDao,
+      saleItemDao,
+      inventoryItemDao,
+      userDao,
+      revenueAttributionService,
+      serviceTypeDao,
+      repairNoteServiceTypeDao,
+    );
+    const reportsController = new ReportsController(reportsService);
+
     const messageTemplateRepository = AppDataSource.getRepository(MessageTemplate);
     const messageTemplateDao = new MessageTemplateDao(messageTemplateRepository);
     const messageTemplateService = new MessageTemplateService(messageTemplateDao);
@@ -202,6 +244,16 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     const importStagingService = new ImportStagingService(redisClient, priceListDao);
     const importStagingController = new ImportStagingController(importStagingService);
 
+    const branchRepository = AppDataSource.getRepository(Branch);
+    const branchDao = new BranchDao(branchRepository);
+    const branchService = new BranchService(branchDao);
+    const branchController = new BranchController(branchService);
+
+    const customerRepository = AppDataSource.getRepository(Customer);
+    const customerDao = new CustomerDao(customerRepository);
+    const customerService = new CustomerService(customerDao, repairNoteDao);
+    const customerController = new CustomerController(customerService);
+
     const notificationRepository = AppDataSource.getRepository(Notification);
     const notificationDao = new NotificationDao(notificationRepository);
     const notificationService = new NotificationService(notificationDao);
@@ -217,6 +269,13 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
       await runWithTenant(tenant.id, async () => {
         await supplierService.seed();
         await messageTemplateService.seed();
+        await serviceTypeService.seed();
+        const localConfig = await localService.getConfig();
+        await branchService.seed({
+          name: localConfig.name,
+          address: localConfig.address,
+          phone: localConfig.phone,
+        });
       });
     }
 
@@ -238,6 +297,10 @@ Promise.all([AppDataSource.initialize(), CustomerServiceDataSource.initialize()]
     app.use("/api/v1/quotes", createQuoteRouter(quoteController));
     app.use("/api/v1/cash", createCashRouter(cashController));
     app.use("/api/v1/settings", createRevenueAttributionRouter(revenueAttributionController));
+    app.use("/api/v1/reports", createReportsRouter(reportsController));
+    app.use("/api/v1/service-types", createServiceTypeRouter(serviceTypeController));
+    app.use("/api/v1/branches", createBranchRouter(branchController));
+    app.use("/api/v1/customers", createCustomerRouter(customerController));
     app.use("/api/v1/n8n", createN8nPublicRouter(messageTemplateDao, priceListDao, repairNoteDao));
 
     app.get("/", (_req, res) => {

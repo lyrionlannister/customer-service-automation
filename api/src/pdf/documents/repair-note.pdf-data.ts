@@ -8,6 +8,7 @@ export interface RepairNotePdfData {
   brand: string;
   model: string;
   reportedFailure: string;
+  additionalFindings: string | null;
   totalValue: number;
   requiresAdvance: boolean;
   advanceValue: number | null;
@@ -15,11 +16,7 @@ export interface RepairNotePdfData {
   deliveryDate: string | null;
   assignedEmployeeName: string | null;
   technicianNotes: string | null;
-  serviceRepair: boolean;
-  serviceMaintenance: boolean;
-  serviceDiagnostic: boolean;
-  serviceRevision: boolean;
-  serviceWaterDamage: boolean;
+  serviceTypeNames: string[];
   deviceOff: boolean;
   hasWarranty: boolean;
   hasExtendedWarranty: boolean;
@@ -36,6 +33,7 @@ export function toRepairNotePdfData(
   note: RepairNote,
   local: Local | null,
   assignedEmployeeName: string | null = null,
+  serviceTypeNames: string[] = [],
 ): RepairNotePdfData {
   return {
     controlNumber: note.controlNumber,
@@ -44,6 +42,7 @@ export function toRepairNotePdfData(
     brand: note.brand,
     model: note.model,
     reportedFailure: note.reportedFailure,
+    additionalFindings: note.additionalFindings ?? null,
     totalValue: Number(note.totalValue),
     requiresAdvance: note.requiresAdvance,
     advanceValue: note.advanceValue != null ? Number(note.advanceValue) : null,
@@ -51,11 +50,7 @@ export function toRepairNotePdfData(
     deliveryDate: note.deliveryDate ?? null,
     assignedEmployeeName,
     technicianNotes: note.technicianNotes ?? null,
-    serviceRepair: note.serviceRepair,
-    serviceMaintenance: note.serviceMaintenance,
-    serviceDiagnostic: note.serviceDiagnostic,
-    serviceRevision: note.serviceRevision,
-    serviceWaterDamage: note.serviceWaterDamage,
+    serviceTypeNames,
     deviceOff: note.deviceOff,
     hasWarranty: note.hasWarranty,
     hasExtendedWarranty: note.hasExtendedWarranty,

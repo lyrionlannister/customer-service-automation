@@ -12,6 +12,8 @@ import { Supplier } from "../suppliers/entities/supplier.entity.js";
 import { Notification } from "../notifications/entities/notification.entity.js";
 import { Tenant } from "../tenancy/entities/tenant.entity.js";
 import { RepairNoteItem } from "../repair-notes/entities/repair-note-item.entity.js";
+import { RepairNoteServiceType } from "../repair-notes/entities/repair-note-service-type.entity.js";
+import { ServiceType } from "../service-types/entities/service-type.entity.js";
 import { InventoryItem } from "../inventory/entities/inventory-item.entity.js";
 import { InventoryMovement } from "../inventory/entities/inventory-movement.entity.js";
 import { Sale } from "../inventory/entities/sale.entity.js";
@@ -21,6 +23,8 @@ import { QuoteItem } from "../quotes/entities/quote-item.entity.js";
 import { CashSession } from "../cash/entities/cash-session.entity.js";
 import { CashMovement } from "../cash/entities/cash-movement.entity.js";
 import { RevenueAttributionSetting } from "../revenue-attribution/entities/revenue-attribution-setting.entity.js";
+import { Branch } from "../branches/entities/branch.entity.js";
+import { Customer } from "../customers/entities/customer.entity.js";
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -40,6 +44,8 @@ const AppDataSource = new DataSource({
     Local,
     RepairNote,
     RepairNoteItem,
+    RepairNoteServiceType,
+    ServiceType,
     MessageTemplate,
     PriceListItem,
     Supplier,
@@ -53,6 +59,8 @@ const AppDataSource = new DataSource({
     CashSession,
     CashMovement,
     RevenueAttributionSetting,
+    Branch,
+    Customer,
   ],
 });
 

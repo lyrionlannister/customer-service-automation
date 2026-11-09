@@ -16,7 +16,6 @@ function makeNote(overrides: Partial<RepairNote> = {}): RepairNote {
     advanceValue: "100.00",
     receivedAt: "2026-01-10",
     deliveryDate: "2026-01-15",
-    technicianName: "Luis",
     technicianNotes: "Revisar touch",
     serviceRepair: true,
     serviceMaintenance: false,
@@ -41,13 +40,26 @@ describe("toRepairNotePdfData", () => {
 
   it("usa null en vez de undefined para campos opcionales ausentes", () => {
     const data = toRepairNotePdfData(
-      makeNote({ contactNumber: undefined, technicianName: undefined, technicianNotes: undefined }),
+      makeNote({ contactNumber: undefined, technicianNotes: undefined }),
       null,
     );
 
     expect(data.contactNumber).toBeNull();
-    expect(data.technicianName).toBeNull();
+    expect(data.assignedEmployeeName).toBeNull();
     expect(data.technicianNotes).toBeNull();
+    expect(data.additionalFindings).toBeNull();
+  });
+
+  it("pasa additionalFindings cuando la nota lo tiene", () => {
+    const data = toRepairNotePdfData(makeNote({ additionalFindings: "Batería inflada" }), null);
+
+    expect(data.additionalFindings).toBe("Batería inflada");
+  });
+
+  it("usa el nombre de empleado resuelto cuando se pasa como tercer argumento", () => {
+    const data = toRepairNotePdfData(makeNote(), null, "Luis Guzmán");
+
+    expect(data.assignedEmployeeName).toBe("Luis Guzmán");
   });
 
   it("mapea los datos del local cuando existe", () => {

@@ -8,6 +8,10 @@ import { RepairNote } from "../../../src/repair-notes/entities/repair-note.entit
 import { RepairNoteItem } from "../../../src/repair-notes/entities/repair-note-item.entity.js";
 import { RepairNoteDao } from "../../../src/repair-notes/daos/repair-note.dao.js";
 import { RepairNoteItemDao } from "../../../src/repair-notes/daos/repair-note-item.dao.js";
+import { RepairNoteServiceType } from "../../../src/repair-notes/entities/repair-note-service-type.entity.js";
+import { RepairNoteServiceTypeDao } from "../../../src/repair-notes/daos/repair-note-service-type.dao.js";
+import { ServiceType } from "../../../src/service-types/entities/service-type.entity.js";
+import { ServiceTypeDao } from "../../../src/service-types/daos/service-type.dao.js";
 import { RepairNoteService } from "../../../src/repair-notes/services/repair-note.service.js";
 import { InventoryItem } from "../../../src/inventory/entities/inventory-item.entity.js";
 import { InventoryMovement } from "../../../src/inventory/entities/inventory-movement.entity.js";
@@ -36,6 +40,8 @@ describe("RepairNoteService items -> inventory movements", () => {
       localService,
       new RepairNoteItemDao(AppDataSource.getRepository(RepairNoteItem)),
       inventoryService,
+      new RepairNoteServiceTypeDao(AppDataSource.getRepository(RepairNoteServiceType)),
+      new ServiceTypeDao(AppDataSource.getRepository(ServiceType)),
     );
   });
 
@@ -118,5 +124,61 @@ describe("RepairNoteService items -> inventory movements", () => {
     const items = await runWithTenant(tenantId, () => repairNoteService.getItems(note.id));
     expect(items).toHaveLength(1);
     expect(items[0].quantity).toBe(1);
+  });
+
+  it("cancels a note, reverses its item stock, and rejects a second cancel or a delivered note", async () => {
+    const item = await runWithTenant(tenantId, () =>
+      inventoryService.create({
+        localId: "1",
+        name: "Pantalla A52",
+        sku: "A52-SCR",
+        kind: "part",
+        costPrice: 400,
+        salePrice: 700,
+      } as any),
+    );
+    await runWithTenant(tenantId, () =>
+      inventoryService.registerMovement({ inventoryItemId: item.id, type: "in", quantity: 3 }),
+    );
+
+    const note = await runWithTenant(tenantId, () =>
+      repairNoteService.create(
+        {
+          customerName: "Cliente Cancela",
+          brand: "Samsung",
+          model: "A52",
+          reportedFailure: "Pantalla rota",
+          receivedAt: "2026-01-01",
+          status: "received",
+        } as any,
+        [{ inventoryItemId: item.id, quantity: 1, unitPrice: 700 }],
+      ),
+    );
+    expect((await runWithTenant(tenantId, () => inventoryService.getById(item.id)))?.quantityOnHand).toBe(2);
+
+    const cancelled = await runWithTenant(tenantId, () => repairNoteService.cancel(note.id));
+    expect(cancelled.status).toBe("cancelled");
+    expect((await runWithTenant(tenantId, () => inventoryService.getById(item.id)))?.quantityOnHand).toBe(3);
+
+    await expect(runWithTenant(tenantId, () => repairNoteService.cancel(note.id))).rejects.toThrow(
+      "La nota ya está cancelada",
+    );
+
+    const delivered = await runWithTenant(tenantId, () =>
+      repairNoteService.create(
+        {
+          customerName: "Cliente Entregado",
+          brand: "Samsung",
+          model: "A52",
+          reportedFailure: "No enciende",
+          receivedAt: "2026-01-01",
+          status: "delivered",
+        } as any,
+        [],
+      ),
+    );
+    await expect(runWithTenant(tenantId, () => repairNoteService.cancel(delivered.id))).rejects.toThrow(
+      "No se puede cancelar una nota ya entregada",
+    );
   });
 });

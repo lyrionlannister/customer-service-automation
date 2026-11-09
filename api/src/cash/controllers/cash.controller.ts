@@ -99,6 +99,8 @@ export class CashController {
         amount: dto.amount,
         note: dto.note,
         createdByEmployeeId: dto.createdByEmployeeId,
+        relatedEntityType: dto.relatedEntityType,
+        relatedEntityId: dto.relatedEntityId,
       });
       res.status(201).json(movement);
     } catch (error: any) {

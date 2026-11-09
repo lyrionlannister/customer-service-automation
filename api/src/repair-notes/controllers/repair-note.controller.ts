@@ -39,8 +39,8 @@ export class RepairNoteController {
 
   create = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { items, ...data } = req.body;
-      const note = await this.repairNoteService.create(data, items);
+      const { items, serviceTypeIds, ...data } = req.body;
+      const note = await this.repairNoteService.create(data, items, serviceTypeIds);
       res.status(201).json(note);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -50,8 +50,8 @@ export class RepairNoteController {
   update = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params["id"] as string;
-      const { items, ...data } = req.body;
-      const note = await this.repairNoteService.update(id, data, items);
+      const { items, serviceTypeIds, ...data } = req.body;
+      const note = await this.repairNoteService.update(id, data, items, serviceTypeIds);
       if (!note) {
         res.status(404).json({ error: "Nota no encontrada" });
         return;
@@ -62,9 +62,27 @@ export class RepairNoteController {
     }
   };
 
+  cancel = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params["id"] as string;
+      const note = await this.repairNoteService.cancel(id);
+      res.status(200).json(note);
+    } catch (error: any) {
+      res.status(error.message === "Nota no encontrada" ? 404 : 400).json({ error: error.message });
+    }
+  };
+
   getItems = async (req: Request, res: Response): Promise<void> => {
     try {
       res.status(200).json(await this.repairNoteService.getItems(req.params["id"] as string));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+  getServiceTypes = async (req: Request, res: Response): Promise<void> => {
+    try {
+      res.status(200).json(await this.repairNoteService.getServiceTypeIds(req.params["id"] as string));
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -81,7 +99,8 @@ export class RepairNoteController {
       const assignedEmployeeName = note.assignedEmployeeId
         ? await this.authService.getEmployeeName(note.assignedEmployeeId)
         : null;
-      const data = toRepairNotePdfData(note, local, assignedEmployeeName);
+      const serviceTypeNames = await this.repairNoteService.getServiceTypeNames(note.id);
+      const data = toRepairNotePdfData(note, local, assignedEmployeeName, serviceTypeNames);
       const buffer = await this.pdfRendererService.render(RepairNoteDocument, { data });
 
       res.setHeader("Content-Type", "application/pdf");

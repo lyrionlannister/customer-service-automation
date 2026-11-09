@@ -14,4 +14,11 @@ export class RepairNoteDao extends TenantScopedDao<RepairNote> {
   async findByControlNumber(controlNumber: number): Promise<RepairNote | null> {
     return this.scoped().andWhere("entity.controlNumber = :controlNumber", { controlNumber }).getOne();
   }
+
+  async findByCustomerId(customerId: string): Promise<RepairNote[]> {
+    return this.scoped()
+      .andWhere("entity.customerId = :customerId", { customerId })
+      .orderBy("entity.receivedAt", "DESC")
+      .getMany();
+  }
 }

@@ -9,9 +9,11 @@ export const createRepairNoteRouter = (controller: RepairNoteController): Router
   router.get("/", controller.getAll);
   router.get("/:id", controller.getById);
   router.get("/:id/items", controller.getItems);
+  router.get("/:id/service-types", controller.getServiceTypes);
   router.get("/:id/pdf", controller.getPdf);
   router.post("/", controller.create);
   router.patch("/:id", controller.update);
+  router.post("/:id/cancel", controller.cancel);
   router.delete("/:id", controller.delete);
   return router;
 };

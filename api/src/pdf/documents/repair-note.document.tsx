@@ -143,16 +143,17 @@ export const RepairNoteDocument: React.FC<{ data: RepairNotePdfData }> = ({ data
             <Field label="Modelo" value={data.model} flex />
           </View>
           <Field label="Falla Reportada" value={data.reportedFailure} flex />
+          {data.additionalFindings && (
+            <Field label="Hallazgos Adicionales" value={data.additionalFindings} flex />
+          )}
         </View>
 
         <SectionLabel>Tipo de Servicio Requerido por el Cliente</SectionLabel>
         <View style={styles.sectionBody}>
           <View style={styles.checksRow}>
-            <Check checked={data.serviceRepair} label="Reparación" />
-            <Check checked={data.serviceMaintenance} label="Mantenimiento" />
-            <Check checked={data.serviceDiagnostic} label="Diagnóstico" />
-            <Check checked={data.serviceRevision} label="Revisión" />
-            <Check checked={data.serviceWaterDamage} label="Mojado" />
+            {data.serviceTypeNames.map((name) => (
+              <Check key={name} checked label={name} />
+            ))}
             <Check checked={data.deviceOff} label="Equipo Apagado" />
           </View>
           <View style={styles.checksRow}>
