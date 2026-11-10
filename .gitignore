@@ -9,7 +9,8 @@ coverage/
 
 data/
 tasks/
-.claude/settings.local.json
+.claude/
+CLAUDE.md
 
 # Logs
 logs
