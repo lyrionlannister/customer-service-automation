@@ -1,4 +1,4 @@
-import { GridIcon } from "../../../modules/common/icons";
+import { GridIcon } from "../../../core/common/icons";
 
 const signInNavbarItems = [
   {

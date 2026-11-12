@@ -26,14 +26,17 @@
     /* Path mapping */
     "paths": {
       "@/*": ["./src/*"],
-      "@modules/*": ["./src/modules/*"],
-      "@common/*": ["./src/modules/common/*"],
+      "@common/*": ["./src/core/common/*"],
+      "@identity/*": ["./src/identity/*"],
+      "@commerce/*": ["./src/commerce/*"],
+      "@messaging/*": ["./src/messaging/*"],
+      "@app-platform/*": ["./src/app_platform/*"],
       "@website/*": ["./src/config/website/*"],
-      "@types/*": ["./src/modules/common/types/*"],
-      "@controller/*": ["./src/modules/common/controllers/*"],
-      "@hooks/*": ["./src/modules/common/hooks/*"],
-      "@ui/*": ["./src/modules/common/components/ui/*"],
-      "@contexts/*": ["./src/modules/common/contexts/*"]
+      "@types/*": ["./src/core/common/types/*"],
+      "@controller/*": ["./src/core/common/controllers/*"],
+      "@hooks/*": ["./src/core/common/hooks/*"],
+      "@ui/*": ["./src/core/common/components/ui/*"],
+      "@contexts/*": ["./src/core/common/contexts/*"]
     }
   },
   "include": ["src"]
