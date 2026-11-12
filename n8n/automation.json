@@ -1,0 +1,1027 @@
+{
+  "name": "customer-service-automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "97c71c06-20b2-4c12-a8be-16442536f909",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-3712, 304],
+      "id": "92f1cdd8-e7dd-451f-8c42-d73230233656",
+      "name": "Webhook",
+      "webhookId": "97c71c06-20b2-4c12-a8be-16442536f909"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst context_id = body.from;\nconst message = String(body.body ?? '').trim();\n\nreturn [{\n  json: {\n    context_id,\n    message,\n    waitSeconds: 6,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-3488, 304],
+      "id": "ed8b196c-ff22-4ef2-9f78-680e8b06ed54",
+      "name": "Preparar Mensaje"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "=buffer_in:{{$json.context_id}}",
+        "messageData": "={\"text\": \"{{ $json.message }}\", \"timestamp\": \"{{$now}}\"}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-3264, 304],
+      "id": "b5f677fc-d369-42db-b93b-2cd9f28d2ece",
+      "name": "Buffer Redis",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=last_seen:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "value": "={{ $now.toMillis() }}",
+        "keyType": "string",
+        "expire": true,
+        "ttl": "={{ $('Preparar Mensaje').item.json.waitSeconds + 60 }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-3040, 304],
+      "id": "970e3e78-1990-4665-9c9b-a084612b9656",
+      "name": "Actualizar Ultimo Mensaje",
+      "alwaysOutputData": true,
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "waiting_reply",
+        "key": "=waiting_reply:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-2816, 304],
+      "id": "066a59bd-ea0e-4d81-9d7f-bc442ae21d3b",
+      "name": "Leer Espera Activa",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f106e69c-d5c8-4d30-8c02-3c3f1b64e4f6",
+              "leftValue": "={{ $json.waiting_reply != null && $json.waiting_reply !== '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2592, 304],
+      "id": "79d99952-c9bd-41c3-afb8-6f8e5a9ed35a",
+      "name": "Ya Hay Respuesta En Espera?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: \"\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [-2368, 208],
+      "id": "0471cfe5-4fd7-4e13-9011-4081ff91f13d",
+      "name": "Responder Sin Mensaje"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=waiting_reply:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "value": "true",
+        "expire": true,
+        "ttl": "={{ $('Preparar Mensaje').item.json.waitSeconds + 30 }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-2368, 400],
+      "id": "9a7bf483-5a7d-4f29-9e3c-51931eac4252",
+      "name": "Marcar Espera Activa",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": "={{ $('Preparar Mensaje').item.json.waitSeconds }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [-2144, 400],
+      "id": "2d67bb47-d0f8-4b30-bc58-3b91cf69e44c",
+      "name": "Esperar Buffer",
+      "webhookId": "bce3df94-a5d9-4cd5-85db-27e31ef71f43"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "buffer",
+        "key": "=buffer_in:{{ $('Preparar Mensaje').item.json.context_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-1920, 400],
+      "id": "507458db-d769-4b64-8597-6f688ea1b3c6",
+      "name": "Leer Buffer",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.buffer ?? [];\nconst entries = (Array.isArray(raw) ? raw : [raw])\n  .map((entry) => {\n    if (!entry) return null;\n    if (typeof entry !== 'string') return entry;\n    try {\n      return JSON.parse(entry);\n    } catch {\n      return { text: entry, timestamp: new Date().toISOString() };\n    }\n  })\n  .filter(Boolean)\n  .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));\n\nconst message = entries\n  .map((entry) => String(entry.text ?? '').trim())\n  .filter(Boolean)\n  .join('\\n');\n\nreturn [{\n  json: {\n    context_id: $('Preparar Mensaje').item.json.context_id,\n    message: message || $('Preparar Mensaje').item.json.message,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1696, 400],
+      "id": "5e61bd61-7dfc-41d7-b9fa-49f3104f05ca",
+      "name": "Consolidar Buffer"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=buffer_in:{{ $('Consolidar Buffer').item.json.context_id }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-1472, 400],
+      "id": "1c7624dd-c9af-47b6-9882-b9c9e18b4bbc",
+      "name": "Limpiar Buffer",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=waiting_reply:{{ $('Consolidar Buffer').item.json.context_id }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-1248, 400],
+      "id": "37b9238e-2b6d-4b11-843a-28bd2f30a498",
+      "name": "Limpiar Espera",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8f5b59dd-7a9e-4df0-a66c-40c6b36f1021",
+              "leftValue": "={{ $('Consolidar Buffer').item.json.message.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[!¡¿?.,\\s]/g, '') }}",
+              "rightValue": "^(hola|buenas|buenosdias|buenastardes|buenasnoches|hello|hi|hey)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-1024, 224],
+      "id": "03150a24-86bd-4ce3-8e70-aa32e5efbafd",
+      "name": "Mensaje Solo Saludo?"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "current_route",
+        "key": "=conversation_route:{{ $('Consolidar Buffer').item.json.context_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [-800, 400],
+      "id": "93e0e85e-59bc-4471-8f79-1042549b73b4",
+      "name": "Leer Ruta Actual",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Mensajes recientes del cliente:\n{{ $('Consolidar Buffer').item.json.message }}\n\nRuta actual guardada:\n{{ $json.current_route || 'ninguna' }}",
+        "options": {
+          "systemMessage": "Eres un clasificador de intenciones para un local de reparaciones de celulares.\n\nClasifica la conversacion en una sola de estas categorias:\n- saludo: el cliente solo saluda, inicia conversacion o todavia no dijo en que necesita ayuda.\n- reparacion: el cliente quiere cotizar, consultar o iniciar una nueva reparacion de celular.\n- garantia: el cliente ya realizo una reparacion y escribe por un problema, reclamo, seguimiento o consulta relacionada con esa reparacion.\n- indeterminado: el cliente parece necesitar ayuda, pero todavia no hay datos suficientes para saber si es reparacion nueva o garantia.\n\nUsa los mensajes recientes y la ruta actual guardada. Si hay ruta actual guardada y el mensaje reciente parece una continuacion normal de esa conversacion, conserva esa ruta. Si no hay ruta actual y el cliente solo saluda, responde saludo. Si no hay ruta actual y la intencion no es clara, responde indeterminado.\n\nResponde solo con una palabra exacta: saludo, reparacion, garantia o indeterminado. No agregues explicaciones, saludos, puntuacion ni texto adicional."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [-576, 400],
+      "id": "400650e2-0f24-4738-a4e5-a1d952ed94a2",
+      "name": "Intent Classifier"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "40d45952-a334-427d-9e5c-e02e2834c37e",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "saludo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-224, 208],
+      "id": "483b5012-f0e8-4426-80a3-c8afd066289a",
+      "name": "Es saludo?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: \"Bienvenido, ¿en que puedo ayudarte el dia de hoy?\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [0, 0],
+      "id": "29f302f6-08c8-48eb-956e-88413b5158af",
+      "name": "Responder Bienvenida"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d4eec9f-9382-41e6-ad44-cb779f908f09",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "garantia",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-112, 416],
+      "id": "4382f604-ac44-4810-af29-a6ed0c9b5cee",
+      "name": "Es garantia?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d57b916b-f021-4bf4-b001-915e24e4a31b",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "reparacion",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [0, 608],
+      "id": "f572b795-d36e-4691-adcf-1abd46a95e1e",
+      "name": "Es reparacion?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: \"Claro, para ayudarte mejor, ¿me escribes por una reparacion nueva o por una garantia de una reparacion anterior?\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [224, 800],
+      "id": "4fcc3043-a395-4b4f-aa91-6f9dd25620ab",
+      "name": "Responder Aclaracion"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=conversation_route:{{ $('Consolidar Buffer').item.json.context_id }}",
+        "value": "garantia",
+        "expire": true,
+        "ttl": 86400
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [0, 208],
+      "id": "0da05bbf-5fcb-43ea-99cd-a61b08872d42",
+      "name": "Guardar Ruta Garantia",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=conversation_route:{{ $('Consolidar Buffer').item.json.context_id }}",
+        "value": "reparacion",
+        "expire": true,
+        "ttl": 86400
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [224, 592],
+      "id": "075efe46-0415-41af-883a-cee8f3751f44",
+      "name": "Guardar Ruta Reparacion",
+      "credentials": {
+        "redis": {
+          "id": "ySVCZTyRHVkXrapM",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Consolidar Buffer').item.json.message }}",
+        "options": {
+          "systemMessage": "Eres el asistente virtual de un local de reparaciones de celulares. Atiendes clientes por WhatsApp con tono amable, claro y profesional.\n\nEl cliente escribe por garantia de una reparacion previa. Ayudalo a ubicar el caso y recopilar la informacion necesaria.\n\nPide nombre del cliente, modelo del celular, fecha aproximada de la reparacion, que reparacion se hizo y cual es el problema actual. Si ya dio alguno de esos datos, no lo repitas.\n\nNo prometas que la garantia aplica, no inventes politicas, precios ni tiempos. Indica que con esos datos se revisara el caso. Mantente breve y util."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [224, 96],
+      "id": "c61d2041-64dd-4af2-a36a-71bd78ff356a",
+      "name": "Agente Garantia"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Consolidar Buffer').item.json.message }}",
+        "options": {
+          "systemMessage": "Eres un extractor de datos para un flujo automatizado de cotizaciones de reparacion de celulares.\n\nAnaliza el mensaje del cliente y responde SOLO JSON valido sin markdown ni texto adicional.\n\nCampos obligatorios:\n- wantsHuman: boolean (true si el cliente pide hablar con una persona/humano/asesor/agente).\n- knowsModel: boolean (true si el cliente menciona marca/modelo identificable).\n- canAccessPhone: boolean (false si dice que no puede usar/encender/desbloquear/acceder al equipo).\n- canIdentifyFailure: boolean (true si describe claramente la falla).\n- issueType: string exacto entre: \"screen\", \"other\", \"unknown\". Usa \"screen\" si menciona pantalla rota, display dañado, tactil no funciona, rayas/manchas en display, cristal/pantalla.\n- model: string (modelo detectado o \"\").\n- brand: string (marca detectada o \"\").\n\nNo inventes datos. Si no estas seguro, usa false, \"unknown\" o string vacio."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [448, 592],
+      "id": "892cf110-bd2a-4d48-96fb-6001d83b3523",
+      "name": "Agente Reparacion"
+    },
+    {
+      "parameters": {
+        "jsCode": "const analysisRaw = String($json.output || '').trim();\nconst contextId = $('Consolidar Buffer').item.json.context_id;\nconst customerMessage = String($('Consolidar Buffer').item.json.message || '');\n\nfunction parseAnalysis(raw) {\n  const fallback = {\n    wantsHuman: false,\n    knowsModel: false,\n    canAccessPhone: true,\n    canIdentifyFailure: false,\n    issueType: 'unknown',\n    model: '',\n    brand: ''\n  };\n\n  if (!raw) return fallback;\n\n  let payload = raw;\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  if (fenced?.[1]) payload = fenced[1].trim();\n\n  try {\n    const parsed = JSON.parse(payload);\n    return {\n      wantsHuman: parsed.wantsHuman === true,\n      knowsModel: parsed.knowsModel === true,\n      canAccessPhone: parsed.canAccessPhone !== false,\n      canIdentifyFailure: parsed.canIdentifyFailure === true,\n      issueType: ['screen', 'other', 'unknown'].includes(parsed.issueType) ? parsed.issueType : 'unknown',\n      model: String(parsed.model || '').trim(),\n      brand: String(parsed.brand || '').trim()\n    };\n  } catch {\n    return fallback;\n  }\n}\n\nconst analysis = parseAnalysis(analysisRaw);\n\nconst API_BASE = process.env.N8N_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'http://api:3000/api/v1/n8n';\n\nasync function getTemplate(key) {\n  const url = `${API_BASE}/message-templates/${encodeURIComponent(key)}`;\n  const response = await fetch(url);\n  if (!response.ok) return '';\n  const data = await response.json();\n  return String(data.text || '').trim();\n}\n\nfunction applyTemplate(text, values) {\n  return Object.entries(values).reduce((acc, [k, v]) => {\n    const safeValue = String(v ?? '');\n    return acc.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), safeValue);\n  }, text);\n}\n\nfunction normalize(str) {\n  return String(str || '')\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '');\n}\n\nconst msgNorm = normalize(customerMessage);\nconst hasScreenHint = /(pantalla|display|lcd|tactil|touch|cristal|vidrio)/.test(msgNorm);\nconst hasNoAccessHint = /(no\\s+prende|no\\s+enciende|no\\s+puedo\\s+acceder|no\\s+puedo\\s+usar|no\\s+tengo\\s+el\\s+telefono|no\\s+tengo\\s+el\\s+celular)/.test(msgNorm);\n\nif (hasNoAccessHint) analysis.canAccessPhone = false;\nif (hasScreenHint && analysis.issueType === 'unknown') analysis.issueType = 'screen';\n\nconst wantsHumanByText = /(humano|asesor|agente|persona|ejecutivo|representante)/.test(msgNorm) && /(hablar|comunicar|pasar|transfer)/.test(msgNorm);\nif (wantsHumanByText) analysis.wantsHuman = true;\n\nasync function searchSupplier(model, supplier) {\n  const url = `${API_BASE}/products/search?model=${encodeURIComponent(model)}&supplier=${encodeURIComponent(supplier)}`;\n  const response = await fetch(url);\n  if (!response.ok) return [];\n  const items = await response.json();\n  return Array.isArray(items) ? items : [];\n}\n\nfunction pickScreenItem(items) {\n  const includeTerms = ['pantalla', 'display', 'lcd', 'touch', 'tactil', 'oled', 'amoled'];\n  const excludeTerms = ['bateria', 'battery', 'pila'];\n\n  const scored = items.map((item) => {\n    const text = normalize(`${item.brand || ''} ${item.model || ''}`);\n    const includes = includeTerms.some((t) => text.includes(t));\n    const excludes = excludeTerms.some((t) => text.includes(t));\n    return { item, score: includes ? 2 : 1, excludes };\n  });\n\n  const filtered = scored.filter((x) => !x.excludes);\n  const pool = filtered.length ? filtered : scored;\n\n  if (!pool.length) return null;\n\n  pool.sort((a, b) => {\n    if (b.score !== a.score) return b.score - a.score;\n    return Number(a.item.price || 0) - Number(b.item.price || 0);\n  });\n\n  return pool[0].item;\n}\n\nasync function searchExternalPrice(url) {\n  try {\n    const response = await fetch(url, {\n      headers: {\n        'User-Agent': 'Mozilla/5.0 (compatible; n8n-bot/1.0)'\n      }\n    });\n\n    if (!response.ok) return null;\n\n    const html = await response.text();\n    const match = html.match(/\\$\\s?[0-9][0-9.,]{2,}/);\n    if (!match) return null;\n\n    return match[0].replace(/\\s+/g, '');\n  } catch {\n    return null;\n  }\n}\n\nasync function buildReply() {\n  if (analysis.wantsHuman) {\n    const tpl = await getTemplate('transferencia_humano');\n    return {\n      reply: tpl,\n      transferToHuman: true\n    };\n  }\n\n  if (!analysis.canAccessPhone || !analysis.knowsModel || !analysis.model) {\n    const tpl = await getTemplate('diagnostico_sin_acceso') || await getTemplate('diagnostico_gratuito');\n    return { reply: tpl, transferToHuman: false };\n  }\n\n  if (analysis.issueType !== 'screen') {\n    const tpl = await getTemplate('diagnostico_no_pantalla') || await getTemplate('diagnostico_gratuito');\n    return { reply: tpl, transferToHuman: false };\n  }\n\n  const model = analysis.model;\n\n  const tecnomaxItems = await searchSupplier(model, 'tecnomax');\n  const tecnomaxScreen = pickScreenItem(tecnomaxItems);\n  if (tecnomaxScreen) {\n    const tpl = await getTemplate('cotizacion_pantalla_proveedor') || await getTemplate('cotizacion_pantalla');\n    return {\n      reply: applyTemplate(tpl, {\n        marca: tecnomaxScreen.brand || analysis.brand || '',\n        modelo: tecnomaxScreen.model || model,\n        precio: Number(tecnomaxScreen.price || 0).toFixed(2),\n        proveedor: tecnomaxScreen.supplier || 'Tecnomax'\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const mnItems = await searchSupplier(model, 'mn refacciones');\n  const mnScreen = pickScreenItem(mnItems);\n  if (mnScreen) {\n    const tpl = await getTemplate('cotizacion_pantalla_proveedor') || await getTemplate('cotizacion_pantalla');\n    return {\n      reply: applyTemplate(tpl, {\n        marca: mnScreen.brand || analysis.brand || '',\n        modelo: mnScreen.model || model,\n        precio: Number(mnScreen.price || 0).toFixed(2),\n        proveedor: mnScreen.supplier || 'MN Refacciones'\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const fixoemUrl = `https://www.fixoem.com/search?q=${encodeURIComponent(`${model} pantalla`)}`;\n  const fixoemPrice = await searchExternalPrice(fixoemUrl);\n  if (fixoemPrice) {\n    const tpl = await getTemplate('cotizacion_fixoem');\n    return {\n      reply: applyTemplate(tpl, {\n        modelo: model,\n        precio: fixoemPrice,\n        url: fixoemUrl\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const mlUrl = `https://listado.mercadolibre.com.mx/${encodeURIComponent(`${model} pantalla`)}`;\n  const mlPrice = await searchExternalPrice(mlUrl);\n  if (mlPrice) {\n    const tpl = await getTemplate('cotizacion_mercadolibre');\n    return {\n      reply: applyTemplate(tpl, {\n        modelo: model,\n        precio: mlPrice,\n        url: mlUrl\n      }),\n      transferToHuman: false\n    };\n  }\n\n  const tpl = await getTemplate('sin_existencia_proveedores') || await getTemplate('diagnostico_gratuito');\n  return {\n    reply: applyTemplate(tpl, { modelo: model }),\n    transferToHuman: false\n  };\n}\n\nconst result = await buildReply();\n\nreturn [{\n  json: {\n    context_id: contextId,\n    reply: result.reply,\n    transferToHuman: result.transferToHuman\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 592],
+      "id": "2fb7f5f0-70c7-4fb2-9646-63a6c8199dce",
+      "name": "Resolver Flujo Reparacion"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.reply ?? $json.output ?? '', transferToHuman: $json.transferToHuman === true } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [800, 400],
+      "id": "46cd4898-43d3-4a99-a987-2626a8fa1354",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [-576, 624],
+      "id": "df7c0614-50d7-42c5-a8ad-aa8fd1b38049",
+      "name": "Modelo Clasificador",
+      "credentials": {
+        "openAiApi": {
+          "id": "ftg5QD4stVM2QZHU",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [224, 320],
+      "id": "cb3af28b-d387-4977-99cb-c68484777bd7",
+      "name": "Modelo Garantia",
+      "credentials": {
+        "openAiApi": {
+          "id": "ftg5QD4stVM2QZHU",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [448, 800],
+      "id": "77e280f8-aa87-445d-8e77-838136609666",
+      "name": "Modelo Reparacion",
+      "credentials": {
+        "openAiApi": {
+          "id": "ftg5QD4stVM2QZHU",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Consolidar Buffer').item.json.context_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [368, 320],
+      "id": "deb56c94-cbda-4849-b500-0466a0215f40",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "VPGID1XiEqlwemU5",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const context_id = $('Consolidar Buffer').item.json.context_id;\nconst message = $('Consolidar Buffer').item.json.message || '';\n\nfunction sqlEscape(str) {\n  return String(str).replace(/'/g, \"''\");\n}\n\nconst humanMsg = JSON.stringify({\n  type: 'human',\n  content: message,\n  additional_kwargs: {},\n  response_metadata: {}\n});\n\nconst aiMsg = JSON.stringify({\n  type: 'ai',\n  content: 'Bienvenido, ¿en que puedo ayudarte el dia de hoy?',\n  additional_kwargs: {},\n  response_metadata: {},\n  tool_calls: [],\n  invalid_tool_calls: []\n});\n\nreturn [{\n  json: {\n    query: `INSERT INTO n8n_chat_histories (session_id, message) VALUES ('${sqlEscape(context_id)}', '${sqlEscape(humanMsg)}'::jsonb), ('${sqlEscape(context_id)}', '${sqlEscape(aiMsg)}'::jsonb)`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, 0],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Preparar Memoria Bienvenida"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [448, 0],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Guardar Memoria Bienvenida",
+      "credentials": {
+        "postgres": {
+          "id": "VPGID1XiEqlwemU5",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const context_id = $('Consolidar Buffer').item.json.context_id;\nconst message = $('Consolidar Buffer').item.json.message || '';\n\nfunction sqlEscape(str) {\n  return String(str).replace(/'/g, \"''\");\n}\n\nconst humanMsg = JSON.stringify({\n  type: 'human',\n  content: message,\n  additional_kwargs: {},\n  response_metadata: {}\n});\n\nconst aiMsg = JSON.stringify({\n  type: 'ai',\n  content: 'Claro, para ayudarte mejor, ¿me escribes por una reparacion nueva o por una garantia de una reparacion anterior?',\n  additional_kwargs: {},\n  response_metadata: {},\n  tool_calls: [],\n  invalid_tool_calls: []\n});\n\nreturn [{\n  json: {\n    query: `INSERT INTO n8n_chat_histories (session_id, message) VALUES ('${sqlEscape(context_id)}', '${sqlEscape(humanMsg)}'::jsonb), ('${sqlEscape(context_id)}', '${sqlEscape(aiMsg)}'::jsonb)`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [448, 800],
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Preparar Memoria Aclaracion"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [672, 800],
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "name": "Guardar Memoria Aclaracion",
+      "credentials": {
+        "postgres": {
+          "id": "VPGID1XiEqlwemU5",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Preparar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Buffer Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buffer Redis": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Ultimo Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Ultimo Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Leer Espera Activa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Espera Activa": {
+      "main": [
+        [
+          {
+            "node": "Ya Hay Respuesta En Espera?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ya Hay Respuesta En Espera?": {
+      "main": [
+        [
+          {
+            "node": "Responder Sin Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar Espera Activa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar Espera Activa": {
+      "main": [
+        [
+          {
+            "node": "Esperar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Leer Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Buffer": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Buffer": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Espera",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Espera": {
+      "main": [
+        [
+          {
+            "node": "Mensaje Solo Saludo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje Solo Saludo?": {
+      "main": [
+        [
+          {
+            "node": "Responder Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer Ruta Actual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Ruta Actual": {
+      "main": [
+        [
+          {
+            "node": "Intent Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Clasificador": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Intent Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Classifier": {
+      "main": [
+        [
+          {
+            "node": "Es saludo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es saludo?": {
+      "main": [
+        [
+          {
+            "node": "Responder Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es garantia?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es garantia?": {
+      "main": [
+        [
+          {
+            "node": "Guardar Ruta Garantia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es reparacion?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es reparacion?": {
+      "main": [
+        [
+          {
+            "node": "Guardar Ruta Reparacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Aclaracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Ruta Garantia": {
+      "main": [
+        [
+          {
+            "node": "Agente Garantia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Ruta Reparacion": {
+      "main": [
+        [
+          {
+            "node": "Agente Reparacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Garantia": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Garantia",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo Reparacion": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Reparacion",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Garantia",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Reparacion",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Garantia": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Reparacion": {
+      "main": [
+        [
+          {
+            "node": "Resolver Flujo Reparacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Flujo Reparacion": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder Bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Preparar Memoria Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Memoria Bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Guardar Memoria Bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder Aclaracion": {
+      "main": [
+        [
+          {
+            "node": "Preparar Memoria Aclaracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Memoria Aclaracion": {
+      "main": [
+        [
+          {
+            "node": "Guardar Memoria Aclaracion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "dcbab3c1-7f3f-45b3-be16-60c04bb33d05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ec8dc788b88f9933fefd6cec3b35e811760de1195ec5f4ce2c859c7d5a072fb5"
+  },
+  "id": "2KlDdPYVLPRSrUV3",
+  "tags": []
+}

@@ -1,0 +1,167 @@
+services:
+  nginx:
+    image: docker.io/library/nginx:alpine
+    container_name: customer-service-nginx
+    ports:
+      - "${NGINX_HTTP_PORT:-8080}:80"
+      - "${NGINX_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - n8n
+      - client
+    networks:
+      - customer-service
+
+  certbot:
+    image: docker.io/certbot/certbot
+    container_name: customer-service-certbot
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done'
+    networks:
+      - customer-service
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL is required}
+    image: customer-service-client
+    container_name: customer-service-client
+    networks:
+      - customer-service
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: customer-service-api
+    environment:
+      NODE_ENV: ${NODE_ENV:?NODE_ENV is required}
+      PORT: ${PORT:?PORT is required}
+      AUTOMATION_URL: ${AUTOMATION_URL:?AUTOMATION_URL is required}
+      DB_HOST: ${DB_HOST:?DB_HOST is required}
+      DB_PORT: ${DB_PORT:?DB_PORT is required}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      N8N_DB_DATABASE: ${N8N_DB_DATABASE:?N8N_DB_DATABASE is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ENABLE_WHATSAPP_LISTENER: ${ENABLE_WHATSAPP_LISTENER:?ENABLE_WHATSAPP_LISTENER is required}
+      WHATSAPP_AUTH_PATH: ${WHATSAPP_AUTH_PATH:?WHATSAPP_AUTH_PATH is required}
+      PUPPETEER_EXECUTABLE_PATH: ${PUPPETEER_EXECUTABLE_PATH:-/usr/bin/chromium}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_USER: ${REDIS_USER:?REDIS_USER is required}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      N8N_INTERNAL_TOKEN: ${N8N_INTERNAL_TOKEN:?N8N_INTERNAL_TOKEN is required}
+      # Puerto interno del contenedor de Redis (siempre 6379) -- no confundir con
+      # REDIS_PORT, que es el puerto publicado en el host para el mapeo de abajo.
+      REDIS_PORT: 6379
+    ports:
+      - "${APP_PORT:?APP_PORT is required}:${APP_CONTAINER_PORT:?APP_CONTAINER_PORT is required}"
+    volumes:
+      - whatsapp_auth:/app/.wwebjs_auth
+      - whatsapp_cache:/app/.wwebjs_cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+    networks:
+      - customer-service
+
+  n8n:
+    build:
+      context: ./n8n
+      dockerfile: Dockerfile
+    image: customer-service-n8n
+    container_name: customer-service-n8n
+    environment:
+      N8N_HOST: ${N8N_HOST:?N8N_HOST is required}
+      N8N_PORT: ${N8N_PORT:?N8N_PORT is required}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:?N8N_PROTOCOL is required}
+      N8N_LISTEN_ADDRESS: ${N8N_LISTEN_ADDRESS:?N8N_LISTEN_ADDRESS is required}
+      WEBHOOK_URL: ${WEBHOOK_URL:?WEBHOOK_URL is required}
+      N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL:?N8N_EDITOR_BASE_URL is required}
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:?N8N_SECURE_COOKIE is required}
+      DB_TYPE: ${N8N_DB_TYPE:?N8N_DB_TYPE is required}
+      DB_POSTGRESDB_HOST: ${N8N_DB_HOST:?N8N_DB_HOST is required}
+      DB_POSTGRESDB_PORT: ${N8N_DB_PORT:?N8N_DB_PORT is required}
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_DATABASE:?N8N_DB_DATABASE is required}
+      DB_POSTGRESDB_USER: ${N8N_DB_USER:?N8N_DB_USER is required}
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:?N8N_DB_PASSWORD is required}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:?GENERIC_TIMEZONE is required}
+      TZ: ${TZ:?TZ is required}
+      N8N_INTERNAL_TOKEN: ${N8N_INTERNAL_TOKEN:?N8N_INTERNAL_TOKEN is required}
+    ports:
+      - "${N8N_PORT:?N8N_PORT is required}:${N8N_PORT:?N8N_PORT is required}"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - customer-service
+
+  postgres:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: customer-service-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+    ports:
+      - "${POSTGRES_PORT:?POSTGRES_PORT is required}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?POSTGRES_USER is required} -d ${POSTGRES_DB:?POSTGRES_DB is required}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - customer-service
+
+  redis:
+    build:
+      context: ./database
+      dockerfile: redis.Dockerfile
+    container_name: customer-service-redis
+    environment:
+      REDIS_USER: ${REDIS_USER:?REDIS_USER is required}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    ports:
+      - "${REDIS_PORT:?REDIS_PORT is required}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --user $REDIS_USER --pass $REDIS_PASSWORD --no-auth-warning ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - customer-service
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+  whatsapp_auth:
+  whatsapp_cache:
+  certbot_certs:
+  certbot_www:
+
+networks:
+  customer-service:
+    driver: bridge
