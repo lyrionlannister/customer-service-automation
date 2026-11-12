@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 
-import SignInLayout from "../modules/common/layouts/sign-in-layout";
+import SignInLayout from "../core/common/layouts/sign-in-layout";
 import { LoginOnlyWhenLoggedOut, ProtectedRoute } from "./auth-guards";
 import { protectedRoutes, publicRoutes } from "./routes";
 

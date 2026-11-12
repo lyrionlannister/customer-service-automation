@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseErrorMessage } from "../../../src/modules/whatsapp/utils/whatsapp.utils";
+import { parseErrorMessage } from "../../../src/messaging/whatsapp/utils/whatsapp.utils";
 
 describe("parseErrorMessage", () => {
   it("returns the server's error field when present", async () => {

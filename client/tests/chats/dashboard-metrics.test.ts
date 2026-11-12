@@ -3,7 +3,7 @@ import {
   buildDailyBusinessSeries,
   buildMonthlyBusinessSeries,
   summarizeDashboardMetrics,
-} from "../../src/modules/chats/utils/dashboard-metrics";
+} from "../../src/messaging/chats/utils/dashboard-metrics";
 
 describe("summarizeDashboardMetrics", () => {
   it("aggregates revenue, open repair notes, and stock alerts from live business data", () => {
